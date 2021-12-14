@@ -16,4 +16,6 @@ For the storage of data referring to movies and series, SQLite is being used.
 
 However, to enable maintenance of backups and other actions, the images referring to posters of the titles are kept in folders.
 
-In the future, the identification of duplicates will be implemented and for that a file with CRC completion is in the same folder as the file referring to the movie. This information will be used to compare the contents of the file, and thus make it possible to find duplicates even when the filenames are different.
+In the future, the identification of duplicates will be implemented and for that a file with CRC completion is in the same folder as the file referring to the movie. 
+
+This information will be used to compare the contents of the file, and thus make it possible to find duplicates even when the filenames are different.
