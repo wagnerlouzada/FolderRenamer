@@ -1982,6 +1982,8 @@ namespace FolderRenamer
         private CatalogItem AddCatalogItem (CatalogItem BaseItem, ItemType ItemType, string Name)
         {
             CatalogItem newItem = new CatalogItem();
+            newItem.parent = BaseItem;
+
             FillCatalogItem(newItem, ItemType, Name);
 
             if (BaseItem.Items == null)
@@ -1989,7 +1991,7 @@ namespace FolderRenamer
                 BaseItem.Items = new List<CatalogItem>();
             }
             BaseItem.Items.Add(newItem);
-
+         
             return newItem;
         }
 
@@ -2223,6 +2225,26 @@ namespace FolderRenamer
 
         }
 
+        private bool isProcessingSerie(CatalogItem itm)
+        {
+            if (itm.parent == null) return false;
+            if (itm.parent.Serie) return true;
+            return isProcessingSerie(itm.parent);
+        }
+
+        private bool isFolderSerie(string path)
+        {
+            bool isSerie = false;
+            string[] subdirectoryEntries = Directory.GetDirectories(path);
+            foreach (string folder in subdirectoryEntries)
+            {
+                string[] names = folder.Split('\\');
+                isSerie = int.TryParse(names[names.Length-1], out int val);
+                if (isSerie) return true;
+            }
+            return isSerie;
+        }
+
         private CatalogItem SetCatalogItem(ItemType Type, string path, string Name, CatalogItem bItem, DriveInfo drive = null, bool CheckCrc = false, bool GetMovieInfo = false)
         {
             CatalogItem itm = new CatalogItem();
@@ -2235,15 +2257,18 @@ namespace FolderRenamer
                 {
                     curVolumeId = HD.getSerial(drive.Name);
                     curVolumeName = drive.VolumeLabel;
-                   
-                    bItem.DiveInfo = drive;
-                    bItem.Size = drive.TotalSize;
-                    bItem.UnsudedSpace = drive.AvailableFreeSpace;
-                    bItem.VolumeId = curVolumeId;
-                    bItem.VolumeName = curVolumeName;
-                    bItem.Name = curVolumeName;
-                    bItem.Title = curVolumeName;
-                    bItem.FullFilename = drive.Name;
+
+                    itm.DiveInfo = drive;
+                    itm.Size = drive.TotalSize;
+                    itm.UnsudedSpace = drive.AvailableFreeSpace;
+                    itm.VolumeId = curVolumeId;
+                    itm.VolumeName = curVolumeName;
+                    itm.Name = curVolumeName;
+                    itm.Title = curVolumeName;
+                    itm.FullFilename = drive.Name;
+
+                    itm.Serie = false;
+
                 }
             }
 
@@ -2264,7 +2289,13 @@ namespace FolderRenamer
                 itm.VolumeName = curVolumeName;
                 itm.Title = GetTitle(Name, bItem);
                 itm.FullFilename = cpath;
-                bItem.Year = Convert.ToInt16(cpath.GetYearsFromString().FirstOrDefault());
+                itm.Year = Convert.ToInt16(cpath.GetYearsFromString().FirstOrDefault());
+
+                itm.Serie = isFolderSerie(cpath);
+                if (!itm.Serie)
+                {
+                    itm.Serie = isProcessingSerie(bItem);
+                }
                 try
                 {
                     itm.Size = fi.Length;
@@ -2291,7 +2322,9 @@ namespace FolderRenamer
                 itm.Season = getSeasonEpisode("s", path);
                 itm.Episode = getSeasonEpisode("e", path);
                 itm.Title = GetTitle(path, itm);
-                bItem.Year = Convert.ToInt16(path.GetYearsFromString().FirstOrDefault());
+                itm.Year = Convert.ToInt16(path.GetYearsFromString().FirstOrDefault());
+
+                itm.Serie = isProcessingSerie(itm);
 
                 if (CheckCrc)
                 {

@@ -133,6 +133,9 @@ namespace FolderRenamer
         [SQLite.Ignore]
         public DriveInfo DiveInfo { get; set; }
 
+        [SQLite.Ignore]
+        public CatalogItem parent { get; set; }
+
     }
 
     public class MovieImage
