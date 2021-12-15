@@ -2225,14 +2225,14 @@ namespace FolderRenamer
 
         }
 
-        private bool isProcessingSerie(CatalogItem itm)
+        private bool isSonOfSerie(CatalogItem itm)
         {
             if (itm.parent == null) return false;
             if (itm.parent.Serie) return true;
-            return isProcessingSerie(itm.parent);
+            return isSonOfSerie(itm.parent);
         }
 
-        private bool isFolderSerie(string path)
+        private bool isFolderOfSerie(string path)
         {
             bool isSerie = false;
             string[] subdirectoryEntries = Directory.GetDirectories(path);
@@ -2291,11 +2291,12 @@ namespace FolderRenamer
                 itm.FullFilename = cpath;
                 itm.Year = Convert.ToInt16(cpath.GetYearsFromString().FirstOrDefault());
 
-                itm.Serie = isFolderSerie(cpath);
+                itm.Serie = isFolderOfSerie(cpath);
                 if (!itm.Serie)
                 {
-                    itm.Serie = isProcessingSerie(bItem);
+                    itm.Serie = isSonOfSerie(bItem);
                 }
+
                 try
                 {
                     itm.Size = fi.Length;
@@ -2324,7 +2325,7 @@ namespace FolderRenamer
                 itm.Title = GetTitle(path, itm);
                 itm.Year = Convert.ToInt16(path.GetYearsFromString().FirstOrDefault());
 
-                itm.Serie = isProcessingSerie(itm);
+                itm.Serie = isSonOfSerie(itm);
 
                 if (CheckCrc)
                 {
