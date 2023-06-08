@@ -25,6 +25,8 @@ using Newtonsoft.Json.Serialization;
 using TestDLApp.Utilities.Extensions;
 using Microsoft.VisualBasic;
 using SQLite;
+using System.Linq.Expressions;
+using static SQLite.SQLite3;
 
 namespace FolderRenamer
 {
@@ -32,35 +34,34 @@ namespace FolderRenamer
     public partial class mainForm : Form
     {
 
-
         #region Properties
 
-        public List<String> ToRemoveAll = new List<string>();
-        public List<String> ToRemoveFolder = new List<string>();
-        public List<String> ToRemoveFile = new List<string>();
-        //public List<VideoFile> VideoFiles = new List<VideoFile>();
-        //public List<SubtitleFile> SubtitleFiles = new List<SubtitleFile>();
-        //public List<VideoFolder> VideoFolders = new List<VideoFolder>();
-        public List<String> Patterns = new List<string>();
-        public int maxLengthForPattern = 50;
-        public Boolean SilentMode = false;
-        public string SqLiteFile = "";
-        string[] allowedVideos;
-        string[] allowedSub;
-        public Catalog Catalog = new Catalog();
-        public CatalogItem ReadingData = new CatalogItem();
-        List<MovieImage> imageListPosters = new List<MovieImage>();
-        List<MovieImage> imageListBackdrop = new List<MovieImage>();
-        List<MovieImage> imageListActors = new List<MovieImage>();
-        public uint? curVolumeId;
-        public string curVolumeName;
-        public string CatalogFolder = "";
+        private List<String> ToRemoveAll = new List<string>();
+        private List<String> ToRemoveFolder = new List<string>();
+        private List<String> ToRemoveFile = new List<string>();
+        private List<String> Patterns = new List<string>();
+        private int maxLengthForPattern = 50;
+        private Boolean SilentMode = false;
+        private Boolean GetTmdbPeople = false;
+        private string SqLiteFile = "";
+        private string[] allowedVideos;
+        private string[] allowedSub;
+        private string[] ignoreFolder;
+        private Catalog Catalog = new Catalog();
+        private CatalogItem ReadingData = new CatalogItem();
+        private List<MovieImage> imageListPosters = new List<MovieImage>();
+        private List<MovieImage> imageListBackdrop = new List<MovieImage>();
+        private List<MovieImage> imageListActors = new List<MovieImage>();
+        private uint? curVolumeId;
+        private string curVolumeName;
+        private string CatalogFolder = "";
+        private int PptGridColunWidth = 150;
 
         //private MovieCatalog CurCatItem = new MovieCatalog();
         private CatalogItem CurCatItem = new CatalogItem();
 
-        public string TMDB_ApiKey = "b54df3a8957fa96c9d23412c528bb667";
-        public string TMDB_Token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiNTRkZjNhODk1N2ZhOTZjOWQyMzQxMmM1MjhiYjY2NyIsInN1YiI6IjYxOGU5NGU5NjZhN2MzMDA2NGJmZDFmMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.7OeQCMpl6s7zpGvsRD4LaKS-ETGDe7T8_hH5Tqi5mAA";
+        private string TMDB_ApiKey = "b54df3a8957fa96c9d23412c528bb667";
+        private string TMDB_Token = "eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJiNTRkZjNhODk1N2ZhOTZjOWQyMzQxMmM1MjhiYjY2NyIsInN1YiI6IjYxOGU5NGU5NjZhN2MzMDA2NGJmZDFmMiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.7OeQCMpl6s7zpGvsRD4LaKS-ETGDe7T8_hH5Tqi5mAA";
 
         #endregion
 
@@ -79,6 +80,7 @@ namespace FolderRenamer
         private void mainForm_Load(object sender, EventArgs e)
         {           
             maxLengthForPattern = Convert.ToInt32(ConfigurationManager.AppSettings["maxLengthForPattern"]);
+            GetTmdbPeople = Convert.ToBoolean(ConfigurationManager.AppSettings["GetTmdbPeople"]);
             SilentMode = Convert.ToBoolean(ConfigurationManager.AppSettings["silentMode"]);
 
             if (SilentMode)
@@ -89,7 +91,8 @@ namespace FolderRenamer
 
             allowedVideos = ConfigurationManager.AppSettings["video"].Split(',').ToArray();
             allowedSub = ConfigurationManager.AppSettings["subtitle"].Split(',').ToArray();
-            
+            ignoreFolder = ConfigurationManager.AppSettings["ignoreFolder"].ToUpper().Split(',').ToArray();
+
             imageListIcon.Images.Add("_FOLDER_", IconHelper.GetDirectoryIcon());
             lblAll.Parent = tabControl1.TabPages["tabPage2"];
             lblFolder.Parent = tabControl1.TabPages["tabPage2"];
@@ -143,6 +146,28 @@ namespace FolderRenamer
             }
 
             CreateDB();
+      
+            // load data from db (root)
+            LoadRoot();
+
+            pptGridCatalogs.MoveSplitterTo(PptGridColunWidth);
+            pptGrdDetailData.MoveSplitterTo(PptGridColunWidth);
+        }
+
+        public static void SetLabelColumnWidth(PropertyGrid grid, int width)
+        {
+            if (grid == null)
+                return;
+            FieldInfo fi = grid.GetType().GetField("gridView", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (fi == null)
+                return;
+            Control view = fi.GetValue(grid) as Control;
+            if (view == null)
+                return;
+            MethodInfo mi = view.GetType().GetMethod("MoveSplitterTo", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (mi == null)
+                return;
+            mi.Invoke(view, new object[] { width });
         }
 
         #endregion
@@ -196,6 +221,9 @@ namespace FolderRenamer
             wordsToRemove.Visible = true;
             wordsToRemoveFile.Visible = true;
             wordsToRemoveFolder.Visible = true;
+
+            pptGridCatalogs.MoveSplitterTo(PptGridColunWidth);
+            pptGrdDetailData.MoveSplitterTo(PptGridColunWidth);
         }
 
         private void splitContainer1_ClientSizeChanged(object sender, EventArgs e)
@@ -259,9 +287,9 @@ namespace FolderRenamer
             SelectFolder();
         }
 
-        private void btnProcess_Click(object sender, EventArgs e)
+        private async void  BtnProcess_Click(object sender, EventArgs e)
         {
-            Process(chkAgressive.Checked);
+             Process(chkAgressive.Checked, chkVideoRes.Checked);
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -289,31 +317,15 @@ namespace FolderRenamer
             ProcessSubNames();
         }        
         
-        private void btnCatalog_Click(object sender, EventArgs e)
+        private async void btnCatalog_Click(object sender, EventArgs e)
         {
-            MountCatalog();
+            await MountCatalog();
+            //await Task.Run(MountCatalog);
         }
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-
-            SaveFile();
-            SaveFileFolder();
-            SaveFileFile();
-            ToRemoveAll.Clear();
-            ToRemoveFolder.Clear();
-            ToRemoveFile.Clear();
-
-            //wordsToRemove.Visible = false;
-            //wordsToRemoveFile.Visible = false;
-            //wordsToRemoveFolder.Visible = false;
-
-            ReadWords();
-
-            //wordsToRemove.Visible = true;
-            //wordsToRemoveFile.Visible = true;
-            //wordsToRemoveFolder.Visible = true;
-
+            SaveDicts(); 
         }
 
         private void btnAbout_Click(object sender, EventArgs e)
@@ -323,17 +335,20 @@ namespace FolderRenamer
 
         private void btnAddToAll_Click(object sender, EventArgs e)
         {
-            AddToAll();
+            //AddToAll();
+            AddToList(wordsToRemove, "ToRemove.txt");
         }
 
         private void btnAddToFolder_Click(object sender, EventArgs e)
         {
-            AddToFolder();
+            //AddToFolder();
+            AddToList(wordsToRemoveFolder, "ToRemoveFolder.txt");
         }
 
         private void btnAddToFile_Click(object sender, EventArgs e)
         {
-            AddToFile();
+            //AddToFile();
+            AddToList(wordsToRemoveFile, "ToRemoveFile.txt");
         }        
 
         private void btnSearchPatterns_Click_1(object sender, EventArgs e)
@@ -346,35 +361,38 @@ namespace FolderRenamer
             SaveCatalog(ReadingData, 0);
         }
 
-        private void button3_Click(object sender, EventArgs e)
+        private async void btnReprocessData_Click(object sender, EventArgs e)
         {
-            UpdateNodeDataTitle(chkTmdbDo.Checked);
+            await ReprocessNodeDataTitle((CatalogItem)tvCatalogs.SelectedNode.Tag, chkTmdbDo.Checked, null, 0, chkRefreshTmdb.Checked);
         }
 
         private void btnLoadCatalogs_Click(object sender, EventArgs e)
         {
-            tvCatalogs.Nodes.Clear();
-            LoadCatalogs(null, 0);
+            LoadRoot();
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void btnTitleEdit_Click(object sender, EventArgs e)
         {
-            // get current video and get movie information about
-            // ave on db to
-            CatalogItem data = (CatalogItem)tvCatalogs.SelectedNode.Tag;
-            if (data != null)
-            {
-                data.Title = GetTitle(data.Name, data);
-            }
+            EditTitle(tvCatalogs, pptGridCatalogs);
+        }
+
+        private void btnTitleEditCatalog_Click(object sender, EventArgs e)
+        {
+            EditTitle(tvFoldersCat, pptGrdDetailData);
+        }
+
+        private void btnReprocess_Click(object sender, EventArgs e)
+        {
+            UpdateNodeDataTitle(chkTmdbDo.Checked);
         }
 
         #endregion
 
         #region Menu
 
-        private void cleanNamesToolStripMenuItem1_Click(object sender, EventArgs e)
+        private async void cleanNamesToolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            Process(chkAgressive.Checked);
+            await Process(chkAgressive.Checked, chkVideoRes.Checked);
         }
 
         private void createFoldersToolStripMenuItem_Click(object sender, EventArgs e)
@@ -426,12 +444,6 @@ namespace FolderRenamer
             ResizeForm();
         }
 
-        private void About()
-        {
-            AboutBox form = new AboutBox();
-            form.ShowDialog();
-        }
-
         private void listFolders_DoubleClick(object sender, EventArgs e)
         {
             listFolders.Items.Clear();
@@ -474,17 +486,16 @@ namespace FolderRenamer
 
         private void dtGridCatalogs_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            SetImagesCatalog(e.RowIndex);
+            DialogResult result = MessageBox.Show("Maintain only this image, Proceed?", "Image Selection", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation);
+            if (result.Equals(DialogResult.OK))
+            {
+                DeleteFolderExceptThis(tvCatalogs, e.RowIndex);
+            }
         }
 
         private void tvCatalogs_NodeMouseClick(object sender, TreeNodeMouseClickEventArgs e)
         {
-            CatalogItem itm = (CatalogItem)e.Node.Tag;
-            if (itm != null)
-            {
-                LoadCatalogs(e.Node, itm.Id);
-                e.Node.Expand();
-            }
+            LoadNodes(e.Node);
         }
 
         private void tvCatalogs_AfterSelect(object sender, TreeViewEventArgs e)
@@ -492,11 +503,43 @@ namespace FolderRenamer
             SetCurMovieCatalog();
         }
 
+        private void chkOnlyWTmdb_CheckedChanged(object sender, EventArgs e)
+        {
+            LoadRoot();
+        }
+
+        private void chkNeedRemove_CheckedChanged(object sender, EventArgs e)
+        {
+            LoadRoot();
+        }
+
+        private void tvCatalogs_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            EditTitle(tvCatalogs, pptGridCatalogs);
+        }
+
+        private void tvFoldersCat_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            EditTitle(tvFoldersCat, pptGrdDetailData);
+        }
+
         #endregion
 
         #endregion
 
         #region Parms To Rename File & Folders
+
+        private void SaveDicts()
+        {
+            SaveFile(wordsToRemove, "ToRemove.txt");
+            SaveFile(wordsToRemoveFolder, "ToRemoveFolder.txt");
+            SaveFile(wordsToRemoveFile, "ToRemoveFile.txt");
+            ToRemoveAll.Clear();
+            ToRemoveFolder.Clear();
+            ToRemoveFile.Clear();
+            // reread
+            ReadWords();
+        }
 
         public void ReadWords()
         {
@@ -539,83 +582,22 @@ namespace FolderRenamer
             //Application.DoEvents();
         }
 
-        private void SaveFile()
+        private void SaveFile(TextBox tb, string Fiename)
         {
 
-
-            if ((wordsToRemove.Text != null) && (wordsToRemove.Text != ""))
+            if ((tb.Text != null) && (tb.Text != ""))
             {
-                string filePath = Path.Combine(CatalogFolder, "ToRemove.txt");
+                string filePath = Path.Combine(CatalogFolder, Fiename);
 
                 using (StreamWriter outputFile = new StreamWriter(filePath))
                 {
-                    for (int i = 0; i < wordsToRemove.Lines.Length; i++)
+                    for (int i = 0; i < tb.Lines.Length; i++)
                     {
 
-                        String text = wordsToRemove.Lines[i].Trim();
+                        String text = tb.Lines[i].Trim();
                         if (text != "")
                         {
-                            if (i == wordsToRemove.Lines.Length-2)
-                            {
-                                outputFile.Write(text);
-                            }
-                            else
-                            {
-                                outputFile.WriteLine(text);
-                            }
-                        }
-
-                    }
-                }
-
-            }
-        }
-
-        private void SaveFileFolder()
-        {
-            if ((wordsToRemoveFolder.Text != null) && (wordsToRemoveFolder.Text != ""))
-            {
-                string filePath = Path.Combine(CatalogFolder, "ToRemoveFolder.txt");
-
-                using (StreamWriter outputFile = new StreamWriter(filePath))
-                {
-                    for (int i = 0; i < wordsToRemoveFolder.Lines.Length; i++)
-                    {
-
-                        String text = wordsToRemoveFolder.Lines[i].Trim();
-                        if (text != "")
-                        {
-                            if (i == wordsToRemoveFolder.Lines.Length - 2)
-                            {
-                                outputFile.Write(text);
-                            }
-                            else
-                            {
-                                outputFile.WriteLine(text);
-                            }
-                        }
-
-                    }
-                }
-
-            }
-        }
-
-        private void SaveFileFile()
-        {
-            if ((wordsToRemoveFile.Text != null) && (wordsToRemoveFile.Text != ""))
-            {
-                string filePath = Path.Combine(CatalogFolder, "ToRemoveFile.txt");
-
-                using (StreamWriter outputFile = new StreamWriter(filePath))
-                {
-                    for (int i = 0; i < wordsToRemoveFile.Lines.Length; i++)
-                    {
-
-                        String text = wordsToRemoveFile.Lines[i].Trim();
-                        if (text != "")
-                        {
-                            if (i == wordsToRemoveFile.Lines.Length - 2)
+                            if (i == tb.Lines.Length - 2)
                             {
                                 outputFile.Write(text);
                             }
@@ -674,6 +656,12 @@ namespace FolderRenamer
 
         #region Functions
 
+        private void About()
+        {
+            AboutBox form = new AboutBox();
+            form.ShowDialog();
+        }
+
         public String ClearStringData(String ToClean, Boolean isFile, bool AgressiveMode = false)
         {
 
@@ -705,10 +693,10 @@ namespace FolderRenamer
                     }
                 }
 
-                foreach (var DictItem in ToRemoveAll)
-                {
+                //foreach (var DictItem in ToRemoveAll)
+                //{
                     CleanedString = CleanedString.RemoveFromList(ToRemoveAll, true);
-                }
+                //}
 
                 CleanedString = " " + CleanedString.TrimStart().TrimEnd() + " ";
                 CleanedString = CleanedString.RemoveSpecialChars();
@@ -812,12 +800,12 @@ namespace FolderRenamer
             return result;
         }
 
-        private void ProcessFolder(String path, bool AgressiveMode = false)
+        private void ProcessFolder(String path, bool AgressiveMode = false, bool VideoResolution = false)
         {
             TreeNode node = new TreeNode();
             if (File.Exists(path))
             {
-                ProcessFile(path, AgressiveMode);
+                ProcessFile(path, AgressiveMode, VideoResolution);
             }
             else if (Directory.Exists(path))
             {
@@ -831,7 +819,7 @@ namespace FolderRenamer
 
                     tvFolders.SelectedNode = node;
                 }
-                ProcessDirectory(path, node, AgressiveMode);
+                ProcessDirectory(path, node, AgressiveMode, VideoResolution);
                 Application.DoEvents();
             }
             else
@@ -843,14 +831,13 @@ namespace FolderRenamer
             }
         }
 
-        private void Process(bool AgressiveMode = false)
+        private Task Process(bool AgressiveMode = false, bool VideoResolution = false)
         {
             if (!SilentMode)
             {
                 tvFolders.Nodes.Clear();
             }
-            //VideoFiles.Clear();
-            //SubtitleFiles.Clear();
+
             if (listFolders.Items.Count == 0)
             {
                 if (txtFolderName.Text != "" && txtFolderName.Text != null)
@@ -861,17 +848,18 @@ namespace FolderRenamer
             }
             else
             {
-                foreach(var itm in listFolders.Items)
+                foreach (var itm in listFolders.Items)
                 {
-                    ProcessFolder(itm.ToString(), AgressiveMode);
+                    ProcessFolder(itm.ToString(), AgressiveMode, VideoResolution);
                 }
             }
             SaveVideoLog();
+            return null;
         }
 
         // Process all files in the directory passed in, recurse on any directories
         // that are found, and process the files they contain.
-        public void ProcessDirectory(string targetDirectory, TreeNode node, bool AgressiveMode = false)
+        public void ProcessDirectory(string targetDirectory, TreeNode node, bool AgressiveMode = false, bool VideoResulution = false)
         {
 
             if (chbFolderRename.Checked)
@@ -920,22 +908,24 @@ namespace FolderRenamer
                 string[] subdirectoryEntries = Directory.GetDirectories(targetDirectory);
                 foreach (string subdirectory in subdirectoryEntries)
                 {
-                    
-                    TreeNode snode = null;
-                    if (!SilentMode)
+                    if (Array.IndexOf(ignoreFolder, LastString(subdirectory.ToUpper())) == -1)
                     {
-                        tvFolders.SelectedNode = node;
-                        snode = tvFolders.SelectedNode.Nodes.Add(LastString(subdirectory));
+                        TreeNode snode = null;
+                        if (!SilentMode)
+                        {
+                            tvFolders.SelectedNode = node;
+                            snode = tvFolders.SelectedNode.Nodes.Add(LastString(subdirectory));
 
-                        snode.ImageKey = "_FOLDER_";
-                        snode.SelectedImageKey = "_FOLDER_";
-                        snode.StateImageKey = "_FOLDER_";
+                            snode.ImageKey = "_FOLDER_";
+                            snode.SelectedImageKey = "_FOLDER_";
+                            snode.StateImageKey = "_FOLDER_";
 
-                        tvFolders.SelectedNode = snode;
+                            tvFolders.SelectedNode = snode;
+                        }
+
+                        ProcessDirectory(subdirectory, snode, AgressiveMode, VideoResulution);
+                        Application.DoEvents();
                     }
-
-                    ProcessDirectory(subdirectory, snode, AgressiveMode);
-                    Application.DoEvents();
                 }
             }
             // Process the list of files found in the directory.
@@ -946,13 +936,13 @@ namespace FolderRenamer
                 {
                     tvFolders.SelectedNode = node;
                 }
-                ProcessFile(fileName, AgressiveMode);
+                ProcessFile(fileName, AgressiveMode, VideoResulution);
                 Application.DoEvents();
             }
         }
 
         // Insert logic for processing found files here.
-        public void ProcessFile(string originalFileName, bool AgressiveMode = false)
+        public void ProcessFile(string originalFileName, bool AgressiveMode = false, bool VideoResolution = false )
         {
             TreeNode fNode = null;
 
@@ -994,6 +984,69 @@ namespace FolderRenamer
 
                     }
                     
+                }
+
+                if (VideoResolution)
+                {
+                    try
+                    {
+                        VideoModel resolution = new VideoModel().VideoInfo(newFileName);
+                        // buscar o width e o heigh no nome, se houver remover()
+                        if (resolution != null)
+                        {
+                            cleanFileName = cleanFileName.Replace("480p", " ");
+                            cleanFileName = cleanFileName.Replace("480", " ");
+                            cleanFileName = cleanFileName.Replace("720p", " ");
+                            cleanFileName = cleanFileName.Replace("720", " ");
+                            cleanFileName = cleanFileName.Replace("1080p", " ");
+                            cleanFileName = cleanFileName.Replace("1080", " ");
+                            cleanFileName = Regex.Replace(cleanFileName, @"\[.*?\]", "");
+                            cleanFileName = cleanFileName.Replace("[]", " ");
+                            // incluir no final do nome o height entre "[" "]"
+                            cleanFileName = cleanFileName.Replace("  ", " ");
+                            var vRes = resolution.Height.ToString();
+                            if (vRes != "480" && vRes != "720" && vRes != "1080" && vRes != "562")
+                            {
+                                switch (resolution.Width.ToString())
+                                {
+                                    case "1920":
+                                        vRes = "1080";
+                                        break;
+                                    case "1280":
+                                        vRes = "720";
+                                        break;
+                                    case "1000":
+                                        vRes = "562";
+                                        break;
+                                    case "640":
+                                        vRes = "480";
+                                        break;
+                                }
+                            }
+
+
+
+                            String newResFileName = Path.Combine(nPath, cleanFileName + " [" + vRes + "]" + nExtension);
+                            try
+                            {
+                                File.Move(newFileName, newResFileName);
+                                if (!SilentMode)
+                                {
+                                    fNode = tvFolders.SelectedNode.Nodes.Add(LastString(originalFileName) + " -> " + LastString(newResFileName));
+
+                                    fNode.ImageKey = "__MEDIA__";
+                                    fNode.SelectedImageKey = "__MEDIA__";
+                                    fNode.StateImageKey = "__MEDIA__";
+                                }
+                            }
+                            catch { }
+                            finally
+                            {
+
+                            }
+                        }
+                    }
+                    catch { }
                 }
             }
 
@@ -1303,10 +1356,13 @@ namespace FolderRenamer
             string[] folderEntries = Directory.GetDirectories(path);
             foreach (string folder in folderEntries)
             {
-                GetTokens(folder);
-                if (Recursive)
+                if (Array.IndexOf(ignoreFolder, LastString(folder.ToUpper())) == -1)
                 {
-                    SearchPattern(folder, Recursive);
+                    GetTokens(folder);
+                    if (Recursive)
+                    {
+                        SearchPattern(folder, Recursive);
+                    }
                 }
             }
         }
@@ -1359,24 +1415,7 @@ namespace FolderRenamer
 
         #endregion
 
-        public void AddToAll()
-        {
-            if (dataGridView.Rows.Count > 0)
-            {
-                foreach(DataGridViewRow rw in dataGridView.Rows)
-                {
-                    if (Convert.ToBoolean(rw.Cells["Selected"].Value))
-                    {
-                        wordsToRemove.Text = wordsToRemove.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
-                        //Application.DoEvents();
-                    }
-                }
-            }
-            SaveFile();
-            ReadWords();
-        }
-
-        public void AddToFolder()
+        public void AddToList(TextBox Tb, string Filename)
         {
             if (dataGridView.Rows.Count > 0)
             {
@@ -1384,31 +1423,64 @@ namespace FolderRenamer
                 {
                     if (Convert.ToBoolean(rw.Cells["Selected"].Value))
                     {
-                        wordsToRemoveFolder.Text = wordsToRemoveFolder.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
-                        //Application.DoEvents();
+                        Tb.Text = Tb.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
                     }
                 }
             }
-            SaveFileFolder();
+            SaveFile(Tb, Filename);
             ReadWords();
         }
 
-        public void AddToFile()
-        {
-            if (dataGridView.Rows.Count > 0)
-            {
-                foreach (DataGridViewRow rw in dataGridView.Rows)
-                {
-                    if (Convert.ToBoolean(rw.Cells["Selected"].Value))
-                    {
-                        wordsToRemoveFile.Text = wordsToRemoveFile.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
-                        //Application.DoEvents();
-                    }
-                }
-            }
-            SaveFileFile();
-            ReadWords();
-        }
+        //public void AddToAll()
+        //{
+        //    if (dataGridView.Rows.Count > 0)
+        //    {
+        //        foreach(DataGridViewRow rw in dataGridView.Rows)
+        //        {
+        //            if (Convert.ToBoolean(rw.Cells["Selected"].Value))
+        //            {
+        //                wordsToRemove.Text = wordsToRemove.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
+        //                //Application.DoEvents();
+        //            }
+        //        }
+        //    }
+        //    SaveFile(wordsToRemove, "ToRemove.txt");
+        //    ReadWords();
+        //}
+
+        //public void AddToFolder()
+        //{
+        //    if (dataGridView.Rows.Count > 0)
+        //    {
+        //        foreach (DataGridViewRow rw in dataGridView.Rows)
+        //        {
+        //            if (Convert.ToBoolean(rw.Cells["Selected"].Value))
+        //            {
+        //                wordsToRemoveFolder.Text = wordsToRemoveFolder.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
+        //                //Application.DoEvents();
+        //            }
+        //        }
+        //    }
+        //    SaveFile(wordsToRemoveFolder, "ToRemoveFolder.txt");
+        //    ReadWords();
+        //}
+
+        //public void AddToFile()
+        //{
+        //    if (dataGridView.Rows.Count > 0)
+        //    {
+        //        foreach (DataGridViewRow rw in dataGridView.Rows)
+        //        {
+        //            if (Convert.ToBoolean(rw.Cells["Selected"].Value))
+        //            {
+        //                wordsToRemoveFile.Text = wordsToRemoveFile.Text + Environment.NewLine + Convert.ToString(rw.Cells["Pattern"].Value) + Environment.NewLine;
+        //                //Application.DoEvents();
+        //            }
+        //        }
+        //    }
+        //    SaveFile(wordsToRemoveFile, "ToRemoveFile.txt");
+        //    ReadWords();
+        //}
 
         #endregion
 
@@ -1567,11 +1639,17 @@ namespace FolderRenamer
                 {
                     try
                     {
-                        var iconForFile = System.Drawing.Icon.ExtractAssociatedIcon(FullName);
+                        string filename = Path.GetFileName(FullName);
+                        var iconForFile = System.Drawing.Icon.ExtractAssociatedIcon(filename);
                         imageListIcon.Images.Add(Extension, iconForFile);
                         imageListIcon.TransparentColor = Color.Black;
                     }
-                    catch { }
+                    catch (Exception ex){
+                        string ext = Path.GetExtension(FullName);
+                        Bitmap icn  = AppIcon.GetFileIcon(ext);
+                        imageListIcon.Images.Add(Extension, icn);
+                        imageListIcon.TransparentColor = Color.Black;
+                    }
                 }
             }
             else
@@ -1581,11 +1659,18 @@ namespace FolderRenamer
                 {
                     try
                     {
-                        var iconForFile = System.Drawing.Icon.ExtractAssociatedIcon(FullName);
+                        string filename = Path.GetFileName(FullName);
+                        var iconForFile = System.Drawing.Icon.ExtractAssociatedIcon(filename);
                         imageListIcon.Images.Add(Filename, iconForFile);
                         imageListIcon.TransparentColor = Color.Black;
                     }
-                    catch { }
+                    catch (Exception ex)
+                    {
+                        string ext = Path.GetExtension(FullName);
+                        Bitmap icn = AppIcon.GetFileIcon(ext);
+                        imageListIcon.Images.Add(Extension, icn);
+                        imageListIcon.TransparentColor = Color.Black;
+                    }
                 }
             }
         }
@@ -1613,7 +1698,8 @@ namespace FolderRenamer
             long bytesCount = 0;
 
             int attempts = 0;
-            int MaxAttempts = maxLengthForPattern = Convert.ToInt32(ConfigurationManager.AppSettings["MaxAttempts"]);
+            //int MaxAttempts = maxLengthForPattern = Convert.ToInt32(ConfigurationManager.AppSettings["MaxAttempts"]);
+            int MaxAttempts = Convert.ToInt32(ConfigurationManager.AppSettings["MaxAttempts"]);
             bool done = false;
 
             while (attempts < MaxAttempts && !done)
@@ -1662,7 +1748,7 @@ namespace FolderRenamer
 
         #region DB Catalog
 
-        private void UpdateNestedNode(TreeNode node, bool chkTmdb)
+        private void UpdateNestedNode(TreeNode node, bool chkTmdb, bool ForceTmdb)
         {
             CatalogItem data = (CatalogItem)node.Tag;
             if (data != null)
@@ -1671,11 +1757,12 @@ namespace FolderRenamer
                 Application.DoEvents();
 
                 data.Title = GetTitle(data.FullFilename, data);
+
                 data.SoundexTitle = Soundex.Generate(data.Title, 10);
 
-                if (chkTmdb)
+                if (chkTmdb || ForceTmdb)
                 {
-                    GetMovieTmdbData(data, data.FullFilename, chkTmdb);
+                    GetMovieTmdbData(data, data.FullFilename, chkTmdb, ForceTmdb);
                 }
 
                 var recs = UpdateItem(data);
@@ -1689,7 +1776,7 @@ namespace FolderRenamer
                 {
                     foreach (TreeNode cNode in node.Nodes)
                     {
-                        UpdateNestedNode(cNode, chkTmdb);
+                        UpdateNestedNode(cNode, chkTmdb, ForceTmdb);
                     }
                 }
                 else
@@ -1699,35 +1786,42 @@ namespace FolderRenamer
             }
         }
 
-        private void UpdateDbNestedNodeTitle(CatalogItem data, bool chkTmdb)
+        private void UpdateDbNestedNodeTitle(CatalogItem Data, bool chkTmdb, bool ForceTmdb = false)
         {
-            if (data != null)
+            if (Data != null)
             {
-                List<CatalogItem> Items = GetItems(data.Id);
-                foreach (CatalogItem Item in Items)
+                List<CatalogItem> Items = GetItems(Data.Id);
+                foreach (CatalogItem data in Items)
                 {
-                    lblRec.Text = Item.Id.ToString();
+                    lblRec.Text = data.Id.ToString();
                     Application.DoEvents();
 
-                    Item.Title = GetTitle(Item.FullFilename, Item);
-                    Item.SoundexTitle = Soundex.Generate(Item.Title, 10);
+                    data.Title = GetTitle(data.FullFilename, data);
+                    data.SoundexTitle = Soundex.Generate(data.Title, 10);
 
-                    if (chkTmdb)
+                    if (Data.ManualIntervention == 1)
                     {
-                        GetMovieTmdbData(Item, Item.FullFilename, chkTmdb);
+                        data.Title = Data.Title;
+                        data.SoundexTitle = Data.SoundexTitle;
+                        data.ManualIntervention = 1;
                     }
 
-                    var recs = UpdateItem(Item);
+                    if (chkTmdb || ForceTmdb)
+                    {
+                        GetMovieTmdbData(data, data.FullFilename, chkTmdb, ForceTmdb);
+                    }
 
-                    lblRec.Text = Item.Id.ToString() + "ok";
+                    var recs = UpdateItem(data);
+
+                    lblRec.Text = data.Id.ToString() + "ok";
                     Application.DoEvents();
 
-                    UpdateDbNestedNodeTitle(Item, chkTmdb);
+                    UpdateDbNestedNodeTitle(data, chkTmdb);
                 }
             }
         }
 
-        private void UpdateNodeDataTitle(bool chkTmdb)
+        private void UpdateNodeDataTitle(bool chkTmdb, bool ForceTmdb = false)
         {
             CatalogItem data = (CatalogItem)tvCatalogs.SelectedNode.Tag;
             tvCatalogs.SelectedNode.ExpandAll();
@@ -1746,7 +1840,7 @@ namespace FolderRenamer
                 data.SoundexTitle = Soundex.Generate(data.Title, 10);
                 if (chkTmdb)
                 {
-                    GetMovieTmdbData(data, data.FullFilename, chkTmdb);
+                    GetMovieTmdbData(data, data.FullFilename, chkTmdb, ForceTmdb);
                 }
                 var recs = UpdateItem(data);
 
@@ -1760,7 +1854,7 @@ namespace FolderRenamer
                 {
                     foreach(TreeNode node in tvCatalogs.SelectedNode.Nodes)
                     {
-                        UpdateNestedNode(node, chkTmdb);
+                        UpdateNestedNode(node, chkTmdb, ForceTmdb);
                     }
                 }
                 else // tenta pela base de dados
@@ -1770,44 +1864,257 @@ namespace FolderRenamer
             }
         }
 
+        private int IdentifyUnnecessaryFolders(CatalogItem data, SQLite.SQLiteConnection con)
+        {
+            int unnecessaryFolder = 0;
+            if (data.TmdbPosterFoldersQtde>1)
+            {
+                unnecessaryFolder = 1;
+            }
+            int tempUnnecessaryFolder = 0;
+            foreach (var dta in data.Items)
+            {
+                tempUnnecessaryFolder = IdentifyUnnecessaryFolders(dta, con);
+                if (tempUnnecessaryFolder == 1)
+                {
+                    unnecessaryFolder = 1;
+                }
+            }
+            //
+            // salva o resultado do processamento recursivo
+            //
+            data.ToRemoveFromCatalog = unnecessaryFolder;
+           UpdateItem(data, con);
+            return unnecessaryFolder;
+        }
+
+        private async Task ReprocessNodeDataTitle(CatalogItem data, bool chkTmdb = false, SQLite.SQLiteConnection con = null, int level = 0, bool ForceTmdb = false)
+        {
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+            }
+            if (data != null)
+            {
+                lblRec.Text = level.ToString() + " " + data.Title;
+                Application.DoEvents();
+
+                if (data.Type == ItemType.Volume)
+                {
+                    data.Title = data.Name;
+                }
+                else
+                {
+                    data.Title = GetTitle(data.FullFilename, data);
+                }
+
+                data.SoundexTitle = Soundex.Generate(data.Title, 10);
+
+                // Count subdirectories at tmdb folder
+                data.TmdbPosterFoldersQtde = 0;
+                string filepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", data.Title);
+                try
+                {
+                    string[] subdirectoryEntries = Directory.GetDirectories(filepathMovie);
+                    data.TmdbPosterFoldersQtde = subdirectoryEntries.Length;
+                }
+                catch { }
+
+                if (chkTmdb || ForceTmdb)
+                {
+                    GetMovieTmdbData(data, data.FullFilename, chkTmdb, ForceTmdb);
+                }
+
+                var recs = UpdateItem(data, con);
+
+                data.Items = GetItems(data.Id, con);
+                if (data.Items != null && data.Items.Count > 0)
+                {
+                    foreach (var dta in data.Items)
+                    {
+                        await ReprocessNodeDataTitle(dta, chkTmdb, con, level + 1);
+                    }
+                }
+
+                lblRec.Text = level.ToString() + " " + data.Title + " OK!";
+                Application.DoEvents();
+                if (level==0)
+                {
+                    
+                }
+            }
+            if (level == 0)
+            {
+                if (data != null)
+                {
+                    if (level == 0)
+                    {
+                        data.ToRemoveFromCatalog = IdentifyUnnecessaryFolders(data, con);
+                    }
+                }
+            }
+            if (level == 0)
+            {
+                con.Close();
+            }
+            // process data strucuture
+
+        }
+
         public void CreateDB()
         {
             //return;
             try
             {
-
                 //SqLiteFile = Application.StartupPath + "\\Movies.Catlog"; // CatalogFolder
                 SqLiteFile = CatalogFolder + "Movies.Catlog"; // CatalogFolder
                 if (!File.Exists(SqLiteFile))
                 {
+                    var rs = MessageBox.Show("Needs to create Database, Proceed?", "Movie Catalog Database", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation);
+                    if (rs.Equals(DialogResult.OK))
+                    {
+                        System.Data.SQLite.SQLiteConnection.CreateFile(SqLiteFile);
 
-                    System.Data.SQLite.SQLiteConnection.CreateFile(SqLiteFile);
+                        var con = new SQLite.SQLiteConnection(SqLiteFile);
+                        con.CreateTable<CatalogItem>();
+                        con.CreateIndex("CatalogItem", new string[] { "VolumeId", "FatherId" });
+                        con.CreateIndex("CatalogItem", new string[] { "FatherId", "VolumeId" });
 
-                    var con = new SQLite.SQLiteConnection(SqLiteFile);
-                    con.CreateTable<CatalogItem>();
-                    con.CreateIndex("CatalogItem", new string[] { "VolumeId", "FatherId" });
-                    con.CreateIndex("CatalogItem", new string[] { "FatherId" , "VolumeId" });
-                    con.Close();
+                        con.CreateTable<ManualIntervention>();
+                        con.CreateIndex("CatalogItem", new string[] { "Field", "OriginalValue" });
 
+                        con.Close();
+                    }
                 }
             }
             catch (Exception ex) { }
 
         }
 
-        private int UpdateItem(CatalogItem Data)
+        public ManualIntervention GetManualIntervention(ManualIntervention dta, SQLite.SQLiteConnection con = null)
         {
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
-            int id=con.Update(Data);
-            con.Close();
 
-            return id;
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+
+            ManualIntervention data = new ManualIntervention();
+            try
+            {
+                data = con.Query<ManualIntervention>($"select * from ManualIntervention Where OriginalValue = '{dta.OriginalValue.Replace("'", "`") }' and Field = {((int)dta.Field).ToString()}").FirstOrDefault();
+            }
+            catch(Exception ex)
+            {
+                int x = 1;
+            }
+
+            if (close) {
+                con.Close();
+            }
+
+            return data;
 
         }
 
-        private int InsertItem(CatalogItem Data)
+        public int UpdateManualInterventions (ManualIntervention dta, SQLite.SQLiteConnection con = null)
         {
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            int result = 0;
+
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+
+            // find a data for field
+            var record = GetManualIntervention(dta, con);
+            if (record == null)
+            {
+                InsertManualInterventionItem(dta, con);
+            }
+            else
+            {
+                dta.Id = record.Id;
+                result = con.Update(dta);
+            }
+
+            if (close)
+            {
+                con.Close();
+            }
+
+            return result;
+        }
+
+        private int UpdateItem(CatalogItem Data, SQLite.SQLiteConnection con = null)
+        {
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+
+            bool mustInsertIntervention = true;
+            ManualIntervention dta = new ManualIntervention();
+
+            // testar se já existe algum tipo de intervenção manual para o item
+            if (Data.ManualIntervention != 1) {
+                dta.Field = ManualFieldsIntervention.Title;
+                dta.OriginalValue = Data.FullFilename.Split('\\').Last().Split('.').First().Replace("'","`") ;
+                var Intervention = GetManualIntervention(dta, con);
+                if (Intervention != null)
+                {
+                    Data.Title = Intervention.Value;
+                    Data.ManualIntervention = 1;
+                    mustInsertIntervention = false;
+                }
+            }
+
+            int id=con.Update(Data);
+
+            // atualiza os filhos para manterem o mesmo dado
+            if (Data.ManualIntervention == 1)
+            {
+                UpdateAllChildItemsTitle(Data);
+            }
+
+            if (Data.ManualIntervention == 1 && mustInsertIntervention)
+            {
+                // this must be updated in future for all other logged fields
+                dta.Field = ManualFieldsIntervention.Title;
+                dta.OriginalValue = Data.FullFilename.Split('\\').Last().Split('.').First().Replace("'", "`");
+                dta.Value = Data.Title;
+                UpdateManualInterventions(dta, con);
+            }
+
+            if (close)
+            {
+                con.Close();
+            }
+            return id;
+        }
+
+        private void UpdateAllChildItemsTitle(CatalogItem Data)
+        {
+            if (Data.ManualIntervention ==  1)
+            {
+                UpdateDbNestedNodeTitle(Data, false);
+            }
+        }
+
+        private int InsertItem(CatalogItem Data, SQLite.SQLiteConnection con = null)
+        {
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
 
             // testar se´já está no bd
             int id = 0;
@@ -1831,91 +2138,178 @@ namespace FolderRenamer
             {
                 id = con.Insert(Data);
                 id = (int)con.ExecuteScalar<int>(@"select last_insert_rowid()");
-                con.Close();
+                if (close)
+                {
+                    con.Close();
+                }
                 return id;
             }
             else
             {
-                con.Close();
+                if (close)
+                {
+                    con.Close();
+                }
                 return idx;
             }
         }
 
-        private CatalogItem GetItem(int id)
+        private int InsertManualInterventionItem(ManualIntervention Data, SQLite.SQLiteConnection con = null)
         {
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
 
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            int id = 0;
+            try
+            {
+                id = con.Insert(Data);
+                id = (int)con.ExecuteScalar<int>(@"select last_insert_rowid()");
+                if (close)
+                {
+                    con.Close();
+                }
+            }
+            catch
+            {
+                id = 0;
+            }
+
+            if (close)
+            {
+                con.Close();
+            }
+            return id;
+
+        }
+
+        private CatalogItem GetItem(int id, SQLite.SQLiteConnection con = null)
+        {
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+         
             var data = con.Query<CatalogItem>("select * from CatalogItem Where id = ?", new object[] { id } ).FirstOrDefault();
-            con.Close();
+
+            if (close)
+            {
+                con.Close();
+            }
 
             return data;
 
         }
 
-        private int DeleteId(int Id)
+        private int DeleteId(int Id, SQLite.SQLiteConnection con = null)
         {
-
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+         
             int id = con.Delete<CatalogItem>(Id);
-            con.Close();
+            if (close)
+            {
+                con.Close();
+            }
 
             return id;
 
         }
 
-        public void SaveSons(CatalogItem Sons, int Father)
+        public void SaveSons(CatalogItem Sons, int Father, SQLite.SQLiteConnection con = null)
         {
             foreach(var Movie in Sons.Items)
             {
                 Movie.FatherId = Father;
-                int FatherId = InsertItem(Movie);
+                int FatherId = InsertItem(Movie, con);
                 if (Movie.Items != null && Movie.Items.Count > 0)
                 {
                     if (Movie.FullFilename==null)
                     {
                         var x = Movie;
                     }
-                    SaveSons(Movie, FatherId);
+                    SaveSons(Movie, FatherId, con);
                 }
             }
             return;
         }
 
-        private void SaveCatalog(CatalogItem Movies, int FatherId)
+        private void SaveCatalog(CatalogItem Movies, int FatherId, SQLite.SQLiteConnection con = null)
         {
             // Apagar todos os registros do Volume/MArcar como Em Ajuste...
             // Ler a estrutura do catalogo.. item a item.. sub item a sub item...
             // SAlvar o item e guardar o id como pai do prx nivel
 
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+
             con.DeleteAllForVolumeId("CatalogItem", "VolumeId", curVolumeId);
-            con.Close();
+
 
             Movies.FatherId = FatherId;
-            int Father = InsertItem(Movies);
+            int Father = InsertItem(Movies, con);
             if (Movies.Items != null && Movies.Items.Count > 0)
             {
-                SaveSons(Movies, Father);
+                SaveSons(Movies, Father, con);
             }
+
+            if (close)
+            {
+                con.Close();
+            }
+
         }
 
-        private List<CatalogItem> GetVolumes()
+        private List<CatalogItem> GetVolumes(SQLite.SQLiteConnection con = null)
         {
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+
             var data = con.Query<CatalogItem>("select * from CatalogItem Where Type = ?", new object[] { (int)ItemType.Volume });
-            con.Close();
+
+            if (close)
+            {
+                con.Close();
+            }
+
             return data;
         }
 
-        private List<CatalogItem> GetItems(int? FatherId)
+        private List<CatalogItem> GetItems(int? FatherId, SQLite.SQLiteConnection con = null)
         {
-            var con = new SQLite.SQLiteConnection(SqLiteFile);
+            bool close = false;
+            if (con == null)
+            {
+                con = new SQLite.SQLiteConnection(SqLiteFile);
+                close = true;
+            }
+          
             var data = con.Query<CatalogItem>("select * from CatalogItem Where FatherId = ?", FatherId);
-            con.Close();
+            if (close)
+            {
+                con.Close();
+            }
             return data;
         }
 
-        private void LoadCatalogs(TreeNode node=null, int? Father = null)
+        private void LoadCatalogs(TreeNode node=null, int? Father = null, bool OnlyNoTmdb = false, bool OnlyNeedRemove = false)
         {
 
             List<CatalogItem> data = new List<CatalogItem>();
@@ -1928,10 +2322,8 @@ namespace FolderRenamer
                     return;
                 }
                 CatalogItem obj = (CatalogItem)node.Tag; 
-                data = GetItems(obj.Id);
+                data = GetItems(obj.Id); // otimizar oportunamente
             }
-
-
 
             if (Father == null || Father == 0)
             {
@@ -1941,33 +2333,62 @@ namespace FolderRenamer
             }
             foreach (CatalogItem itm in data)
             {
-                TreeNode cNode = new TreeNode();
-                if (node != null)
+                bool show = true;
+                if (OnlyNeedRemove && itm.ToRemoveFromCatalog!=1)
                 {
-                    tvCatalogs.SelectedNode = node;
-                    cNode = tvCatalogs.SelectedNode.Nodes.Add(itm.Title);
-                    SetTreeNode(cNode, itm);
+                    show = false;
                 }
-                else
-                {
-                    cNode = tvCatalogs.Nodes.Add(itm.VolumeName);
-                    SetTreeNode(cNode, itm);
-                }
-                cNode.Tag = itm;
-                if (itm.Type == ItemType.Volume)
-                {
 
+                if (OnlyNoTmdb && (itm.JsonMoviesData != null && itm.JsonFileInfo!="") && itm.Type==ItemType.File)
+                {
+                    show = false;
+                }
+
+                if (show)
+                {
+                    TreeNode cNode = new TreeNode();
+                    if (node != null)
+                    {
+                        tvCatalogs.SelectedNode = node;
+                        cNode = tvCatalogs.SelectedNode.Nodes.Add(itm.Title);
+                        SetTreeNode(cNode, itm);
+                    }
+                    else
+                    {
+                        cNode = tvCatalogs.Nodes.Add(itm.VolumeName);
+                        SetTreeNode(cNode, itm);
+                    }
+                    cNode.Tag = itm;
+                    if (itm.Type == ItemType.Volume)
+                    {
+
+                    }
                 }
             }
         }
 
         #endregion
 
+        private void LoadRoot()
+        {
+            tvCatalogs.Nodes.Clear();
+            LoadCatalogs(null, 0, chkOnlyWTmdb.Checked, chkNeedRemove.Checked);
+        }
+
+        private void LoadNodes(TreeNode node)
+        {
+            CatalogItem itm = (CatalogItem)node.Tag;
+            if (itm != null)
+            {
+                LoadCatalogs(node, itm.Id, chkOnlyWTmdb.Checked, chkNeedRemove.Checked);
+                node.Expand();
+            }
+        }
+
         private void SetCurMovie()
         {
-            pptGrdDetailData.SetLabelColumnWidth(100);
-            pptGrdDetailData.SelectedObject = tvFoldersCat.SelectedNode.Tag;
             CurCatItem = (CatalogItem)tvFoldersCat.SelectedNode.Tag;
+            pptGrdDetailData.SelectedObject = CurCatItem;
             LoadImages();
         }
 
@@ -2018,7 +2439,7 @@ namespace FolderRenamer
                     try
                     {
                         //filepath = Path.Combine(appPath, "TMDB", "Movies", catItem.Title + " ("+year.ToString()+").movie");
-                        filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", catItem.Title + " (" + year.ToString() + ").movie");
+                        filepath = Path.Combine(CatalogFolder, "TMDB", "Catalog", catItem.Title + " (" + year.ToString() + ").movie");
                         try
                         {
                             using (StreamReader streamReader = File.OpenText(filepath))
@@ -2038,8 +2459,8 @@ namespace FolderRenamer
   
             if(data == "")
             {
-                //filepath = Path.Combine(appPath, "TMDB", "Movies", catItem.Title + " (TMDB).movie");
-                filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", catItem.Title + " (TMDB).movie");
+
+                filepath = Path.Combine(CatalogFolder, "TMDB", "Catalog", catItem.Title + " (TMDB).movie");
                 try
                 {
                     using (StreamReader streamReader = File.OpenText(filepath))
@@ -2085,13 +2506,11 @@ namespace FolderRenamer
             string filepath = "";
             if (XcatItem.Year > 0)
             {
-                //filepath = Path.Combine("TMDB", "Movies", XcatItem.Title + " (" + XcatItem.Year.ToString() + ").movie");
-                filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", XcatItem.Title + " (" + XcatItem.Year.ToString() + ").movie");
+                filepath = Path.Combine(CatalogFolder, "TMDB", "Catalog", XcatItem.Title + " (" + XcatItem.Year.ToString() + ").movie");
             }
             else
             {
-                //filepath = Path.Combine("TMDB", "Movies", XcatItem.Title + " (TMDB).movie");
-                filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", XcatItem.Title + " (TMDB).movie");
+                filepath = Path.Combine(CatalogFolder, "TMDB", "Catalog", XcatItem.Title + " (TMDB).movie");
             }
             if (XcatItem.JsonMoviesData != null)
             {
@@ -2126,7 +2545,7 @@ namespace FolderRenamer
                     catItem.Year = Convert.ToInt32(year);
                     try
                     {
-                        Task<Movies> task = Task.Run<Movies>(async () => await GetMovieData(CatalogFolder, catItem.Title, catItem.Year, catItem.Season, catItem.Episode, cToken, TMDB_ApiKey));
+                        Task<Movies> task = Task.Run<Movies>(async () => await GetMovieData(CatalogFolder, catItem.Title, catItem.Year, catItem.Season, catItem.Episode, cToken, TMDB_ApiKey, GetTmdbPeople));
                         if (task.Result != null && task.Result.TotalCount > 0)
                         {
                             var settings = new JsonSerializerSettings() { ContractResolver = new MyContractResolver() };
@@ -2145,7 +2564,7 @@ namespace FolderRenamer
             {
                 try
                 {
-                    Task<Movies> task = Task.Run<Movies>(async () => await GetMovieData(CatalogFolder, catItem.Title, 0, 0, 0, cToken, TMDB_ApiKey));
+                    Task<Movies> task = Task.Run<Movies>(async () => await GetMovieData(CatalogFolder, catItem.Title, 0, 0, 0, cToken, TMDB_ApiKey, GetTmdbPeople));
                     if (task.Result != null && task.Result.TotalCount > 0)
                     {
                         var settings = new JsonSerializerSettings() { ContractResolver = new MyContractResolver() };
@@ -2198,7 +2617,7 @@ namespace FolderRenamer
             node.Tag = itm;
         }
 
-        private void GetMovieTmdbData(CatalogItem itm, string path, bool GetMovieTmdbInfo)
+        private void GetMovieTmdbData(CatalogItem itm, string path, bool GetMovieTmdbInfo, bool ForceTmdb = false)
         {
             lblRec.Text = itm.Id.ToString() + " tmdb";
             Application.DoEvents();
@@ -2214,11 +2633,20 @@ namespace FolderRenamer
                 itm.JsonMoviesData = dataMovie;
 
             }
-            if ((itm.JsonMoviesData == null || itm.JsonMoviesData == "") && (GetMovieTmdbInfo))
+            if (ForceTmdb)
             {
                 lblRec.Text = itm.Id.ToString() + " tmdb by service";
                 Application.DoEvents();
-                GetMovieCatalog(years, itm, GetMovieTmdbInfo);
+                GetMovieCatalog(years, itm, ForceTmdb);
+            }
+            else
+            {
+                if ((itm.JsonMoviesData == null || itm.JsonMoviesData == "") && (GetMovieTmdbInfo))
+                {
+                    lblRec.Text = itm.Id.ToString() + " tmdb by service";
+                    Application.DoEvents();
+                    GetMovieCatalog(years, itm, GetMovieTmdbInfo);
+                }
             }
             lblRec.Text = itm.Id.ToString() + " tmdb done";
             Application.DoEvents();
@@ -2238,68 +2666,74 @@ namespace FolderRenamer
             string[] subdirectoryEntries = Directory.GetDirectories(path);
             foreach (string folder in subdirectoryEntries)
             {
-                string[] names = folder.Split('\\');
-                isSerie = int.TryParse(names[names.Length-1], out int val);
-                if (isSerie) return true;
+                if (Array.IndexOf(ignoreFolder, LastString(folder.ToUpper())) == -1)
+                {
+                    isSerie = int.TryParse(folder.Split('\\').LastOrDefault(), out int val);
+                    if (isSerie) return true;
+                }
             }
             return isSerie;
         }
 
-        private CatalogItem SetCatalogItem(ItemType Type, string path, string Name, CatalogItem bItem, DriveInfo drive = null, bool CheckCrc = false, bool GetMovieInfo = false)
+        private CatalogItem SetCatalogItem(ItemType Type, string path, string Name, CatalogItem bItem, DriveInfo drive = null, bool CheckCrc = false, bool GetMovieInfo = false, bool ForceTmdb = false)
         {
-            CatalogItem itm = new CatalogItem();
+            CatalogItem data = new CatalogItem();
 
             if (Type == ItemType.Volume)
             {
-                FillCatalogItem(bItem, ItemType.Volume, Name);
+                FillCatalogItem(bItem, ItemType.Volume, "NONAME");
 
                 if (drive.IsReady == true)
                 {
                     curVolumeId = HD.getSerial(drive.Name);
                     curVolumeName = drive.VolumeLabel;
 
-                    itm.DiveInfo = drive;
-                    itm.Size = drive.TotalSize;
-                    itm.UnsudedSpace = drive.AvailableFreeSpace;
-                    itm.VolumeId = curVolumeId;
-                    itm.VolumeName = curVolumeName;
-                    itm.Name = curVolumeName;
-                    itm.Title = curVolumeName;
-                    itm.FullFilename = drive.Name;
+                    bItem.DiveInfo = drive;
+                    bItem.Size = drive.TotalSize;
+                    bItem.UnsudedSpace = drive.AvailableFreeSpace;
+                    bItem.VolumeId = curVolumeId;
+                    bItem.VolumeName = curVolumeName;
+                    bItem.FullFilename = curVolumeName;
+                    bItem.Name = curVolumeName;
+                    bItem.Title = curVolumeName;
 
-                    itm.Serie = false;
+                    bItem.SoundexTitle = Soundex.Generate(data.Title, 10);
+
+                    bItem.Serie = false;
 
                 }
             }
 
             if (Type == ItemType.Folder)
             {
-                itm = AddCatalogItem(bItem, ItemType.Folder, Name);
+                data = AddCatalogItem(bItem, ItemType.Folder, Name);
 
                 string cpath = Path.Combine(path, Name);
                 FileInfo fi = new FileInfo(cpath);
 
                 var settings = new JsonSerializerSettings() { ContractResolver = new MyContractResolver() };
 
-                itm.JsonFileInfo = Newtonsoft.Json.JsonConvert.SerializeObject(fi, settings);
-                itm.FileInfo = fi;
-                itm.CreationDate = fi.CreationTime;
-                itm.ModifiedDate = fi.LastWriteTime;
-                itm.VolumeId = curVolumeId;
-                itm.VolumeName = curVolumeName;
-                itm.Title = GetTitle(Name, bItem);
-                itm.FullFilename = cpath;
-                itm.Year = Convert.ToInt16(cpath.GetYearsFromString().FirstOrDefault());
+                data.JsonFileInfo = Newtonsoft.Json.JsonConvert.SerializeObject(fi, settings);
+                data.FileInfo = fi;
+                data.CreationDate = fi.CreationTime;
+                data.ModifiedDate = fi.LastWriteTime;
+                data.VolumeId = curVolumeId;
+                data.VolumeName = curVolumeName;
+                data.FullFilename = cpath;              
+                data.Year = Convert.ToInt16(cpath.GetYearsFromString().FirstOrDefault());
 
-                itm.Serie = isFolderOfSerie(cpath);
-                if (!itm.Serie)
+                data.Title = GetTitle(Name, data);
+                data.SoundexTitle = Soundex.Generate(data.Title,10);
+
+                data.Serie = isFolderOfSerie(cpath);
+                if (!data.Serie)
                 {
-                    itm.Serie = isSonOfSerie(bItem);
+                    data.Serie = isSonOfSerie(bItem);
                 }
 
                 try
                 {
-                    itm.Size = fi.Length;
+                    data.Size = fi.Length;
                 }
                 catch { }
 
@@ -2307,25 +2741,28 @@ namespace FolderRenamer
 
             if (Type == ItemType.File)
             {
-                itm = AddCatalogItem(bItem, ItemType.File, Name);
+                data = AddCatalogItem(bItem, ItemType.File, Name);
 
                 FileInfo fi = new FileInfo(path);
                 var settings = new JsonSerializerSettings() { ContractResolver = new MyContractResolver() };
 
-                itm.JsonFileInfo = Newtonsoft.Json.JsonConvert.SerializeObject(fi, settings);
-                itm.FileInfo = fi;
-                itm.Size = fi.Length;
-                itm.FullFilename = path;
-                itm.CreationDate = fi.CreationTime;
-                itm.ModifiedDate = fi.LastWriteTime;
-                itm.VolumeId = curVolumeId;
-                itm.VolumeName = curVolumeName;
-                itm.Season = getSeasonEpisode("s", path);
-                itm.Episode = getSeasonEpisode("e", path);
-                itm.Title = GetTitle(path, itm);
-                itm.Year = Convert.ToInt16(path.GetYearsFromString().FirstOrDefault());
+                data.JsonFileInfo = Newtonsoft.Json.JsonConvert.SerializeObject(fi, settings);
+                data.FileInfo = fi;
+                data.Size = fi.Length;
+                data.FullFilename = path;
+                data.CreationDate = fi.CreationTime;
+                data.ModifiedDate = fi.LastWriteTime;
+                data.VolumeId = curVolumeId;
+                data.VolumeName = curVolumeName;
 
-                itm.Serie = isSonOfSerie(itm);
+                data.Season = getSeasonEpisode("s", path);
+                data.Episode = getSeasonEpisode("e", path);
+                data.Year = Convert.ToInt16(path.GetYearsFromString().FirstOrDefault());
+
+                data.Serie = isSonOfSerie(data);
+
+                data.Title = GetTitle(path, data);
+                data.SoundexTitle = Soundex.Generate(data.Title, 10);
 
                 if (CheckCrc)
                 {
@@ -2336,8 +2773,8 @@ namespace FolderRenamer
                         try
                         {
                             Crc32 result = CRC(path);
-                            itm.JsonCRC = Newtonsoft.Json.JsonConvert.SerializeObject(CRC(path), settings);
-                            WriteCrcJsonToFile(itm);
+                            data.JsonCRC = Newtonsoft.Json.JsonConvert.SerializeObject(CRC(path), settings);
+                            WriteCrcJsonToFile(data);
                         }
                         catch
                         {
@@ -2348,20 +2785,20 @@ namespace FolderRenamer
                 }
                 else
                 {
-                    itm.JsonCRC = ReadCrcJsonFile(itm);
+                    data.JsonCRC = ReadCrcJsonFile(data);
                 }
 
                 // apenas para videos
                 if (Array.IndexOf(allowedVideos, Path.GetExtension(path)) >= 0)
                 {
-                    GetMovieTmdbData(itm, path, GetMovieInfo);
+                    GetMovieTmdbData(data, path, GetMovieInfo, ForceTmdb);
                 }
             }
 
-            return itm;
+            return data;
         }
 
-        private TreeNode doCatalog(TreeView Tree,  String path, TreeNode node, CatalogItem baseItem, bool CheckCrc, bool GetMovieTmdbInfo)
+        private async Task<TreeNode> doCatalog(TreeView Tree,  String path, TreeNode node, CatalogItem baseItem, bool CheckCrc, bool GetMovieTmdbInfo)
         { 
             catMonitor.Text = path;
 
@@ -2426,18 +2863,21 @@ namespace FolderRenamer
                 string[] subdirectoryEntries = Directory.GetDirectories(path);
                 foreach (string subdirectory in subdirectoryEntries)
                 {
-                    catMonitor.Text = subdirectory;
-                    string[] pts = subdirectory.Split('\\');
-                    Tree.SelectedNode = node;
-                    var nodec = Tree.SelectedNode.Nodes.Add(pts[pts.Length - 1]);
-                    string npath = pts[0] + "\\"; 
-                    for(int i = 1; i<pts.Length-1; i++)
-                    {
-                        npath = Path.Combine(npath, pts[i]);
+                    if (Array.IndexOf(ignoreFolder, LastString(subdirectory.ToUpper())) == -1) {
+                        catMonitor.Text = subdirectory;
+                        string[] pts = subdirectory.Split('\\');
+                        Tree.SelectedNode = node;
+                        var nodec = Tree.SelectedNode.Nodes.Add(pts[pts.Length - 1]);
+                        string npath = pts[0] + "\\"; 
+                        for(int i = 1; i<pts.Length-1; i++)
+                        {
+                            npath = Path.Combine(npath, pts[i]);
+                        }
+                        var catItem = SetCatalogItem(ItemType.Folder, npath, pts[pts.Length - 1], baseItem);
+                        SetTreeNode(nodec, catItem);
+
+                        await doCatalog(Tree, subdirectory, nodec, catItem, CheckCrc, GetMovieTmdbInfo);
                     }
-                    var catItem = SetCatalogItem(ItemType.Folder, npath, pts[pts.Length - 1], baseItem);
-                    SetTreeNode(nodec, catItem);
-                    doCatalog(Tree, subdirectory, nodec, catItem, CheckCrc, GetMovieTmdbInfo);
                 }
                 Application.DoEvents();
             }
@@ -2451,21 +2891,72 @@ namespace FolderRenamer
 
         private String GetTitle(String Data, CatalogItem Item)
         {
-            string sToSearch = ClearStringData(RemoveExtension(Path.GetFileName(Data)), true, true);
+            string sToSearch = "";
 
-            if (Item.Season > 0)
+            ManualIntervention dta = new ManualIntervention();
+            dta.OriginalValue = Item.FullFilename.Split(':').Last().Split('\\').Last().Split('.').First().Replace("'", "`");
+            dta.Field = ManualFieldsIntervention.Title;
+            dta = GetManualIntervention(dta);
+            if (dta != null)
             {
-                sToSearch = RemoveSeasonEpisodeFromName("s", sToSearch, Item.Season);
+                sToSearch = dta.Value;
+                Item.ManualIntervention = 1;
             }
-            if (Item.Episode > 0)
+            else
             {
-                sToSearch = RemoveSeasonEpisodeFromName("e", sToSearch, Item.Episode);
-            }
+                if (Item != null)
+                {
+                    if (Item.ManualIntervention != 1)
+                    {
+                        sToSearch = ClearStringData(RemoveExtension(Path.GetFileName(Data)), true, true);
 
+                        if (Item.Season > 0)
+                        {
+                            sToSearch = RemoveSeasonEpisodeFromName("s", sToSearch, Item.Season);
+                        }
+                        if (Item.Episode > 0)
+                        {
+                            sToSearch = RemoveSeasonEpisodeFromName("e", sToSearch, Item.Episode);
+                        }
+                    }
+
+                    if (Item.parent != null
+                        && Item.FatherId != 0
+                        && Item.FatherId != null
+                        && Item.parent.ManualIntervention == 1)
+                    {
+                        Item.Title = Item.parent.Title;
+                        Item.ManualIntervention = 1;
+                        sToSearch = Item.Title;
+                    }
+                }
+            }
+            if (sToSearch == null || sToSearch == "")
+            {
+                if (Item.parent != null)
+                {
+                    try
+                    {
+                        sToSearch = Item.parent.Title;
+                    }
+                    catch (Exception ex)
+                    {
+
+                    }
+                }
+            }
+            if (sToSearch == null || sToSearch == "")
+            {
+                sToSearch = Item.Name;
+            }
+            if (sToSearch == null || sToSearch == "")
+            {
+                sToSearch = "NONAME";
+            }
             return sToSearch;
         }
 
-        private void MountCatalog()
+        private async Task MountCatalog()
         {
             // começa zerando o catalog em processo de leitura
             ReadingData = new CatalogItem();
@@ -2481,14 +2972,14 @@ namespace FolderRenamer
                 if (txtFolderName.Text != "" && txtFolderName.Text != null)
                 {
                     string path = txtFolderName.Text;
-                    doCatalog(tvFoldersCat, path, null, ReadingData, chkCRC.Checked, chkTmdb.Checked);
+                    await doCatalog(tvFoldersCat, path, null, ReadingData, chkCRC.Checked, chkTmdb.Checked);
                 }
             }
             else
             {
                 foreach (var itm in listFolders.Items)
                 {
-                    doCatalog(tvFoldersCat, itm.ToString(), null, ReadingData, chkCRC.Checked, chkTmdb.Checked);
+                    await doCatalog(tvFoldersCat, itm.ToString(), null, ReadingData, chkCRC.Checked, chkTmdb.Checked);
                 }
             }
             catMonitor.Text = "";
@@ -2638,6 +3129,53 @@ namespace FolderRenamer
             return ClearStringData(ResultString,false,true); ;
         }
 
+        private void EditTitle(TreeView tv, PropertyGridEx.PropertyGridEx pptGrid )
+        {
+            try
+            {
+                
+                CatalogItem data = (CatalogItem)tv.SelectedNode.Tag;
+                string oldTitle = data.Title;
+                var newTitle = InputBox.ShowDialog("", "Movie Title", data.Title);
+                if (newTitle != null && newTitle != "")
+                {
+                    data.Title = newTitle;
+                    data.ManualIntervention = 1;
+                    data.SoundexTitle = Soundex.Generate(data.Title, 10);
+                    UpdateItem(data);
+                    // rename tmdb folder
+                    string OldFilepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", oldTitle);
+                    string NewFilepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", newTitle);
+
+                    try
+                    {
+                        if (File.Exists(OldFilepathMovie) && !File.Exists(NewFilepathMovie))
+                        {
+                            Directory.Move(OldFilepathMovie, NewFilepathMovie);
+                        }
+                    }
+                    catch {
+                        MessageBox.Show("Error trybg Rename TMDB Catalog Folder!", "Catalog Folder REname", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+
+                    // delete all subnodes
+                    try { 
+                        tv.SelectedNode.Nodes.Clear();
+                    }
+                    catch { }
+
+                    // update current item
+                    tv.SelectedNode.Tag = data;
+                    tv.SelectedNode.Text = newTitle;
+                    pptGrid.SelectedObject = tv.SelectedNode.Tag;
+                }
+            }
+            catch (Exception ex)
+            {
+
+            }
+        }
+
         #endregion
 
         #region Movie info 
@@ -2652,7 +3190,7 @@ namespace FolderRenamer
         //    return await task;
         //}
 
-        static async Task<Movies> GetMovieData(String CatalogFolder, String Name, int year, int Season, int Episode,  CancellationToken cancellationToken, String TMDB_ApiKey)
+        static async Task<Movies> GetMovieData(String CatalogFolder, String Name, int year, int Season, int Episode,  CancellationToken cancellationToken, String TMDB_ApiKey, bool GetTmdbPeople)
         {
             Movies result = new Movies();
             using (var client = new ServiceClient(TMDB_ApiKey))
@@ -2667,29 +3205,32 @@ namespace FolderRenamer
 
                     var personIds = movie.Credits.Cast.Select(s => s.Id)
                         .Union(movie.Credits.Crew.Select(s => s.Id));
-
-                    foreach (var id in personIds)
+                    if (GetTmdbPeople)
                     {
-                        var person = await client.People.GetAsync(id, true, cancellationToken);
-                        // person.Name
-                        string PersonName = person.Name;
-                        int ImageNumber = 1;
-                        foreach (var img in person.Images.Results)
+                        foreach (var id in personIds)
                         {
-                            try
+                            var person = await client.People.GetAsync(id, true, cancellationToken);
+                            // person.Name
+                            string PersonName = person.Name;
+                            int ImageNumber = 1;
+                            foreach (var img in person.Images.Results)
                             {
-                                String MovieName = m.OriginalTitle;
-                                if (MovieName == "")
+                                try
                                 {
-                                    MovieName = Name;
+                                    String MovieName = m.OriginalTitle;
+                                    if (MovieName == "")
+                                    {
+                                        MovieName = Name;
+                                    }
+                                    //string filepath = Path.Combine("TMDB", "Movies", Name, MovieName.FileNameClean(), "Peoples", PersonName.FileNameClean() + " (" + ImageNumber.ToString() + ")" + Path.GetExtension(img.FilePath));
+                                    string filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", Name, MovieName.FileNameClean(), "Peoples", PersonName.FileNameClean() + " (" + ImageNumber.ToString() + ")" + Path.GetExtension(img.FilePath));
+                                    await DownloadImage(img.FilePath, filepath, cancellationToken);
                                 }
-                                //string filepath = Path.Combine("TMDB", "Movies", Name, MovieName.FileNameClean(), "Peoples", PersonName.FileNameClean() + " (" + ImageNumber.ToString() + ")" + Path.GetExtension(img.FilePath));
-                                string filepath = Path.Combine(CatalogFolder, "TMDB", "Movies", Name, MovieName.FileNameClean(), "Peoples", PersonName.FileNameClean() + " (" + ImageNumber.ToString() + ")" + Path.GetExtension(img.FilePath));
-                                await DownloadImage(img.FilePath, filepath, cancellationToken);
+                                catch { }
                             }
-                            catch { }
                         }
                     }
+
                     try
                     {
                         String MovieName = m.OriginalTitle;
@@ -2815,46 +3356,49 @@ namespace FolderRenamer
                 CatalogItem catItem = catItm; // (CatalogItem)pptGrdDetailData.SelectedObject;
                 String MovieName = catItem.Title;
                 String Name = catItem.Name;
-                String filepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", MovieName);
-                String[] subdirectoryEntries = Directory.GetDirectories(filepathMovie);
-                if (subdirectoryEntries.Length > 0)
+                if (MovieName != null && MovieName != "")
                 {
-                    bool first = true;
-                    foreach (string folder in subdirectoryEntries)
+                    String filepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", MovieName);
+                    String[] subdirectoryEntries = Directory.GetDirectories(filepathMovie);
+                    if (subdirectoryEntries.Length > 0)
                     {
-                        try
+                        bool first = true;
+                        foreach (string folder in subdirectoryEntries)
                         {
-                            string filepathMovieName = Path.Combine(folder, ImageName);
-                            string FolderName = new DirectoryInfo(System.IO.Path.GetDirectoryName(folder + "\\")).Name;
-                            var tempImage = System.Drawing.Image.FromFile(filepathMovieName); //Load the image from directory location
-                            Bitmap pic = new Bitmap(tempImage.Width, tempImage.Height);
-
-                            using (Graphics g = Graphics.FromImage(pic))
+                            try
                             {
-                                g.DrawImage(tempImage, new Rectangle(0, 0, pic.Width, pic.Height)); //redraw smaller image
+                                string filepathMovieName = Path.Combine(folder, ImageName);
+                                string FolderName = new DirectoryInfo(System.IO.Path.GetDirectoryName(folder + "\\")).Name;
+                                var tempImage = System.Drawing.Image.FromFile(filepathMovieName); //Load the image from directory location
+                                Bitmap pic = new Bitmap(tempImage.Width, tempImage.Height);
+
+                                using (Graphics g = Graphics.FromImage(pic))
+                                {
+                                    g.DrawImage(tempImage, new Rectangle(0, 0, pic.Width, pic.Height)); //redraw smaller image
+                                }
+
+                                tempImage.Dispose();
+
+                                var img = new MovieImage();
+                                img.Key = FolderName;
+                                img.Image = pic;
+
+                                PictList.Add(img);
+
+                                if (GridList != null)
+                                {
+                                    GridList.Rows.Insert(0, pic);
+                                    GridList.Rows[0].Height = 108;
+                                }
+
+                                if (first)
+                                {
+                                    first = false;
+                                    Pict.Image = img.Image;
+                                }
                             }
-
-                            tempImage.Dispose();
-
-                            var img = new MovieImage();
-                            img.Key = FolderName;
-                            img.Image = pic;
-
-                            PictList.Add(img);
-
-                            if (GridList != null)
-                            {
-                                GridList.Rows.Insert(0, pic);
-                                GridList.Rows[0].Height = 108;
-                            }
-
-                            if (first)
-                            {
-                                first = false;
-                                Pict.Image = img.Image;
-                            }
+                            catch (Exception ex) { }
                         }
-                        catch (Exception ex) { }
                     }
                 }
             }
@@ -2864,20 +3408,116 @@ namespace FolderRenamer
         private void LoadImages()
         {
             LoadImages((CatalogItem)pptGrdDetailData.SelectedObject, "Poster.Jpg", pictPoster, imageListPosters, dataGridViewImage);
-            LoadImages((CatalogItem)pptGrdDetailData.SelectedObject, "BAckdrop.Jpg", pictBackdrop, imageListBackdrop);
+            LoadImages((CatalogItem)pptGrdDetailData.SelectedObject, "Backdrop.Jpg", pictBackdrop, imageListBackdrop);
         }
 
         private void LoadImagesCatalogs()
         {
             LoadImages((CatalogItem)pptGridCatalogs.SelectedObject, "Poster.Jpg", pictPosterCatalogs, imageListPosters, dtGridCatalogs);
-            LoadImages((CatalogItem)pptGridCatalogs.SelectedObject, "BAckdrop.Jpg", pictBackdropCatalogs, imageListBackdrop);
+            LoadImages((CatalogItem)pptGridCatalogs.SelectedObject, "Backdrop.Jpg", pictBackdropCatalogs, imageListBackdrop);
+        }
+
+        private void DeleteFolderExceptThis(TreeView tList, int Index)
+        {
+
+            int imgIndex = imageListPosters.Count - Index - 1;
+            CatalogItem catItm = (CatalogItem)tList.SelectedNode.Tag;
+            if (catItm == null)
+            {
+                return;
+            }
+            String Name = "";
+            try
+            {
+                Name = imageListPosters[imgIndex].Key;
+            }
+            catch
+            {
+                return;
+            }
+
+            if (Name == null || Name == "")
+            {
+                return;
+            }
+
+            try
+            {
+                String MovieName = catItm.Title;
+                String filepathMovie = Path.Combine(CatalogFolder, "TMDB", "Movies", MovieName);
+                String[] subdirectoryEntries = Directory.GetDirectories(filepathMovie);
+                if (subdirectoryEntries.Length > 0)
+                {
+
+                    foreach (string folder in subdirectoryEntries)
+                    {
+                        String FolderName = folder.Split('\\').LastOrDefault();
+                        try
+                        {
+                            if (FolderName != Name)
+                            {
+                                String extraFilepathMovie = Path.Combine(CatalogFolder, "TMDB", "Extras", FolderName);
+                                // move to A Special Folder
+                                try
+                                {
+                                    Directory.Move(folder, extraFilepathMovie);
+                                    catItm.ToRemoveFromCatalog = 0;
+                                    catItm.TmdbPosterFoldersQtde = 1;
+                                    UpdateItem(catItm);
+                                    try
+                                    {
+                                        tList.SelectedNode.Tag = catItm;
+                                    }
+                                    catch { }
+                                }
+                                catch (IOException exp)
+                                { }
+
+                            }
+                        }
+                        catch (Exception ex) { }
+                    }
+                }
+            }
+            catch { }
+
         }
 
         #endregion
 
+        private void MediaPlayerCataloging_DoubleClickEvent(object sender, AxWMPLib._WMPOCXEvents_DoubleClickEvent e)
+        {
+            PlayVideo(tvFoldersCat.SelectedNode, MediaPlayerCataloging);
+        }
+
+        private void PlayVideo(TreeNode node, AxWMPLib.AxWindowsMediaPlayer Mp)
+        {
+            CatalogItem video = (CatalogItem)node.Tag;
+            if (video != null)
+            {
+                Mp.URL = "";
+                string filename = video.FullFilename;
+                Mp.URL = filename;
+                //MediaPlayerCataloging.
+
+            }
+        }
+
+        private void dataGridViewImage_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            SetMainPoster(e.RowIndex);
+            DialogResult result = MessageBox.Show("Maintain only this image, Proceed?", "Image Selection", MessageBoxButtons.OKCancel, MessageBoxIcon.Exclamation);
+            if (result.Equals(DialogResult.OK))
+            {
+                DeleteFolderExceptThis(tvFoldersCat, e.RowIndex);
+            }
+        }
+
+        private void MediaPlayerCatalog_DoubleClickEvent(object sender, AxWMPLib._WMPOCXEvents_DoubleClickEvent e)
+        {
+            PlayVideo(tvCatalogs.SelectedNode, MediaPlayerCatalog);
+        }
+ 
     }
 
 }
-
-
-

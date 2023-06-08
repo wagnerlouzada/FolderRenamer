@@ -12,39 +12,6 @@ using System.Windows.Forms;
 namespace FolderRenamer
 {
 
-    public static class MyExtensions
-    {
-        public static string Right(this string sValue, int iMaxLength)
-        {
-            //Check if the value is valid
-            if (string.IsNullOrEmpty(sValue))
-            {
-                //Set valid empty string as string could be null
-                sValue = string.Empty;
-            }
-            else if (sValue.Length > iMaxLength)
-            {
-                //Make the string no longer than the max length
-                sValue = sValue.Substring(sValue.Length - iMaxLength, iMaxLength);
-            }
-
-            //Return the string
-            return sValue;
-        }
-        public static string FileNameClean(this string sValue)
-        {
-
-            sValue = sValue.Replace(":", " - ");
-            sValue = sValue.Replace("|", " - ");
-            sValue = sValue.Replace("+", " - ");
-            sValue = sValue.Replace("\"", "");
-
-            //Return the string
-            return sValue;
-        }
-
-    }
-
     public static class PropGridExExtensions
     {
         public static void SetLabelColumnWidth(this PropertyGridEx.PropertyGridEx grid, int width)
@@ -70,10 +37,40 @@ namespace FolderRenamer
         }
     }
 
-
-        //Extension methods must be defined in a static class
+    //Extension methods must be defined in a static class
     public static class StringExtension
     {
+
+        public static string Right(this string sValue, int iMaxLength)
+        {
+            //Check if the value is valid
+            if (string.IsNullOrEmpty(sValue))
+            {
+                //Set valid empty string as string could be null
+                sValue = string.Empty;
+            }
+            else if (sValue.Length > iMaxLength)
+            {
+                //Make the string no longer than the max length
+                sValue = sValue.Substring(sValue.Length - iMaxLength, iMaxLength);
+            }
+
+            //Return the string
+            return sValue;
+        }
+
+        public static string FileNameClean(this string sValue)
+        {
+
+            sValue = sValue.Replace(":", " - ");
+            sValue = sValue.Replace("|", " - ");
+            sValue = sValue.Replace("+", " - ");
+            sValue = sValue.Replace("\"", "");
+
+            //Return the string
+            return sValue;
+        }
+
         // This is the extension method.
         // The first parameter takes the "this" modifier
         // and specifies the type for which the method is defined.

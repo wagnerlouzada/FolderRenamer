@@ -6,7 +6,7 @@
 #define MyAppPublisher "Joyner"
 #define MyAppURL "http://wagner.louzada.online"
 #define MyAppExeName "FolderRenamer.exe"
-
+                                            
 [Setup]
 AppId={{6D08B7C0-DB7A-4657-9C18-0452EEAC12F7}        
 AppName={#MyAppName}
@@ -18,6 +18,7 @@ AppUpdatesURL={#MyAppURL}
 DefaultDirName={pf32}\Joyner\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=no
+OutputDir=..\..\..\Setup
 OutputBaseFilename=FolderRenamer_{#MyAppVersion}
 Compression=lzma
 SolidCompression=yes

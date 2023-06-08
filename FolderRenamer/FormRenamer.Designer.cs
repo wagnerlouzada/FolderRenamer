@@ -43,14 +43,18 @@
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.splitContainer12 = new System.Windows.Forms.SplitContainer();
             this.splitContainer13 = new System.Windows.Forms.SplitContainer();
+            this.chkVideoRes = new System.Windows.Forms.CheckBox();
             this.btnAbout = new System.Windows.Forms.Button();
             this.btnPairSub = new System.Windows.Forms.Button();
             this.btnCreateFolders = new System.Windows.Forms.Button();
             this.chkAgressive = new System.Windows.Forms.CheckBox();
             this.tbCatalogs = new System.Windows.Forms.TabPage();
+            this.splitContainer20 = new System.Windows.Forms.SplitContainer();
             this.splitContainer19 = new System.Windows.Forms.SplitContainer();
             this.splitContainer15 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer21 = new System.Windows.Forms.SplitContainer();
             this.tvCatalogs = new System.Windows.Forms.TreeView();
+            this.MediaPlayerCatalog = new AxWMPLib.AxWindowsMediaPlayer();
             this.splitContainer16 = new System.Windows.Forms.SplitContainer();
             this.pptGridCatalogs = new PropertyGridEx.PropertyGridEx();
             this.splitContainer17 = new System.Windows.Forms.SplitContainer();
@@ -59,14 +63,21 @@
             this.splitContainer18 = new System.Windows.Forms.SplitContainer();
             this.pictPosterCatalogs = new System.Windows.Forms.PictureBox();
             this.pictBackdropCatalogs = new System.Windows.Forms.PictureBox();
-            this.lblRec = new System.Windows.Forms.Label();
+            this.chkRefreshTmdb = new System.Windows.Forms.CheckBox();
+            this.btnTitleEdit = new System.Windows.Forms.Button();
+            this.chkNeedRemove = new System.Windows.Forms.CheckBox();
+            this.btnReprocessData = new System.Windows.Forms.Button();
+            this.chkOnlyWTmdb = new System.Windows.Forms.CheckBox();
             this.chkTmdbDo = new System.Windows.Forms.CheckBox();
-            this.button3 = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
+            this.btnReprocess = new System.Windows.Forms.Button();
+            this.btnLoadCatalogs = new System.Windows.Forms.Button();
+            this.lblRec = new System.Windows.Forms.Label();
             this.tabCatlog = new System.Windows.Forms.TabPage();
             this.splitCatlog = new System.Windows.Forms.SplitContainer();
             this.splitContainer7 = new System.Windows.Forms.SplitContainer();
+            this.splitContainer22 = new System.Windows.Forms.SplitContainer();
             this.tvFoldersCat = new System.Windows.Forms.TreeView();
+            this.MediaPlayerCataloging = new AxWMPLib.AxWindowsMediaPlayer();
             this.splitContainer8 = new System.Windows.Forms.SplitContainer();
             this.splitContainer9 = new System.Windows.Forms.SplitContainer();
             this.pptGrdDetailData = new PropertyGridEx.PropertyGridEx();
@@ -80,6 +91,7 @@
             this.splitContainer10 = new System.Windows.Forms.SplitContainer();
             this.pictPoster = new System.Windows.Forms.PictureBox();
             this.pictBackdrop = new System.Windows.Forms.PictureBox();
+            this.btnTitleEditCatloging = new System.Windows.Forms.Button();
             this.btnSaveCatalog = new System.Windows.Forms.Button();
             this.chkTmdb = new System.Windows.Forms.CheckBox();
             this.chkCRC = new System.Windows.Forms.CheckBox();
@@ -137,6 +149,10 @@
             this.splitContainer13.Panel2.SuspendLayout();
             this.splitContainer13.SuspendLayout();
             this.tbCatalogs.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer20)).BeginInit();
+            this.splitContainer20.Panel1.SuspendLayout();
+            this.splitContainer20.Panel2.SuspendLayout();
+            this.splitContainer20.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer19)).BeginInit();
             this.splitContainer19.Panel1.SuspendLayout();
             this.splitContainer19.Panel2.SuspendLayout();
@@ -145,6 +161,11 @@
             this.splitContainer15.Panel1.SuspendLayout();
             this.splitContainer15.Panel2.SuspendLayout();
             this.splitContainer15.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer21)).BeginInit();
+            this.splitContainer21.Panel1.SuspendLayout();
+            this.splitContainer21.Panel2.SuspendLayout();
+            this.splitContainer21.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.MediaPlayerCatalog)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer16)).BeginInit();
             this.splitContainer16.Panel1.SuspendLayout();
             this.splitContainer16.Panel2.SuspendLayout();
@@ -169,6 +190,11 @@
             this.splitContainer7.Panel1.SuspendLayout();
             this.splitContainer7.Panel2.SuspendLayout();
             this.splitContainer7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer22)).BeginInit();
+            this.splitContainer22.Panel1.SuspendLayout();
+            this.splitContainer22.Panel2.SuspendLayout();
+            this.splitContainer22.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.MediaPlayerCataloging)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer8)).BeginInit();
             this.splitContainer8.Panel1.SuspendLayout();
             this.splitContainer8.Panel2.SuspendLayout();
@@ -290,7 +316,7 @@
             this.tvFolders.Location = new System.Drawing.Point(0, 0);
             this.tvFolders.Name = "tvFolders";
             this.tvFolders.SelectedImageIndex = 3;
-            this.tvFolders.Size = new System.Drawing.Size(764, 265);
+            this.tvFolders.Size = new System.Drawing.Size(808, 442);
             this.tvFolders.TabIndex = 6;
             // 
             // imageListIcon
@@ -310,13 +336,13 @@
             // 
             // btnProcess
             // 
-            this.btnProcess.Location = new System.Drawing.Point(15, 88);
+            this.btnProcess.Location = new System.Drawing.Point(15, 114);
             this.btnProcess.Name = "btnProcess";
             this.btnProcess.Size = new System.Drawing.Size(116, 23);
             this.btnProcess.TabIndex = 7;
             this.btnProcess.Text = "Clean Names";
             this.btnProcess.UseVisualStyleBackColor = true;
-            this.btnProcess.Click += new System.EventHandler(this.btnProcess_Click);
+            this.btnProcess.Click += new System.EventHandler(this.BtnProcess_Click);
             // 
             // tabControl1
             // 
@@ -330,7 +356,7 @@
             this.tabControl1.Multiline = true;
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(950, 326);
+            this.tabControl1.Size = new System.Drawing.Size(994, 503);
             this.tabControl1.TabIndex = 8;
             this.tabControl1.SelectedIndexChanged += new System.EventHandler(this.tabControl1_SelectedIndexChanged);
             this.tabControl1.Selected += new System.Windows.Forms.TabControlEventHandler(this.tabControl1_Selected);
@@ -342,7 +368,7 @@
             this.tabPage1.Location = new System.Drawing.Point(4, 22);
             this.tabPage1.Name = "tabPage1";
             this.tabPage1.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage1.Size = new System.Drawing.Size(942, 300);
+            this.tabPage1.Size = new System.Drawing.Size(986, 477);
             this.tabPage1.TabIndex = 0;
             this.tabPage1.Text = "Process";
             this.tabPage1.UseVisualStyleBackColor = true;
@@ -364,8 +390,8 @@
             // 
             this.splitContainer12.Panel2.BackColor = System.Drawing.SystemColors.ButtonFace;
             this.splitContainer12.Panel2MinSize = 20;
-            this.splitContainer12.Size = new System.Drawing.Size(936, 294);
-            this.splitContainer12.SplitterDistance = 265;
+            this.splitContainer12.Size = new System.Drawing.Size(980, 471);
+            this.splitContainer12.SplitterDistance = 442;
             this.splitContainer12.TabIndex = 14;
             // 
             // splitContainer13
@@ -383,6 +409,7 @@
             // splitContainer13.Panel2
             // 
             this.splitContainer13.Panel2.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.splitContainer13.Panel2.Controls.Add(this.chkVideoRes);
             this.splitContainer13.Panel2.Controls.Add(this.btnAbout);
             this.splitContainer13.Panel2.Controls.Add(this.btnProcess);
             this.splitContainer13.Panel2.Controls.Add(this.btnPairSub);
@@ -391,9 +418,19 @@
             this.splitContainer13.Panel2.Controls.Add(this.chbFileRename);
             this.splitContainer13.Panel2.Controls.Add(this.chbRecursiveFolders);
             this.splitContainer13.Panel2.Controls.Add(this.chbFolderRename);
-            this.splitContainer13.Size = new System.Drawing.Size(936, 265);
-            this.splitContainer13.SplitterDistance = 764;
+            this.splitContainer13.Size = new System.Drawing.Size(980, 442);
+            this.splitContainer13.SplitterDistance = 808;
             this.splitContainer13.TabIndex = 7;
+            // 
+            // chkVideoRes
+            // 
+            this.chkVideoRes.AutoSize = true;
+            this.chkVideoRes.Location = new System.Drawing.Point(15, 84);
+            this.chkVideoRes.Name = "chkVideoRes";
+            this.chkVideoRes.Size = new System.Drawing.Size(140, 17);
+            this.chkVideoRes.TabIndex = 16;
+            this.chkVideoRes.Text = "Check Video Resolution";
+            this.chkVideoRes.UseVisualStyleBackColor = true;
             // 
             // btnAbout
             // 
@@ -410,7 +447,7 @@
             // 
             // btnPairSub
             // 
-            this.btnPairSub.Location = new System.Drawing.Point(15, 146);
+            this.btnPairSub.Location = new System.Drawing.Point(15, 172);
             this.btnPairSub.Name = "btnPairSub";
             this.btnPairSub.Size = new System.Drawing.Size(116, 23);
             this.btnPairSub.TabIndex = 12;
@@ -421,7 +458,7 @@
             // 
             // btnCreateFolders
             // 
-            this.btnCreateFolders.Location = new System.Drawing.Point(15, 117);
+            this.btnCreateFolders.Location = new System.Drawing.Point(15, 143);
             this.btnCreateFolders.Name = "btnCreateFolders";
             this.btnCreateFolders.Size = new System.Drawing.Size(116, 23);
             this.btnCreateFolders.TabIndex = 11;
@@ -441,7 +478,7 @@
             // 
             // tbCatalogs
             // 
-            this.tbCatalogs.Controls.Add(this.splitContainer19);
+            this.tbCatalogs.Controls.Add(this.splitContainer20);
             this.tbCatalogs.Location = new System.Drawing.Point(4, 22);
             this.tbCatalogs.Name = "tbCatalogs";
             this.tbCatalogs.Padding = new System.Windows.Forms.Padding(3);
@@ -450,12 +487,33 @@
             this.tbCatalogs.Text = "Catalogs";
             this.tbCatalogs.UseVisualStyleBackColor = true;
             // 
+            // splitContainer20
+            // 
+            this.splitContainer20.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer20.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
+            this.splitContainer20.Location = new System.Drawing.Point(3, 3);
+            this.splitContainer20.Name = "splitContainer20";
+            this.splitContainer20.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer20.Panel1
+            // 
+            this.splitContainer20.Panel1.Controls.Add(this.splitContainer19);
+            // 
+            // splitContainer20.Panel2
+            // 
+            this.splitContainer20.Panel2.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.splitContainer20.Panel2.Controls.Add(this.lblRec);
+            this.splitContainer20.Panel2MinSize = 20;
+            this.splitContainer20.Size = new System.Drawing.Size(936, 294);
+            this.splitContainer20.SplitterDistance = 264;
+            this.splitContainer20.TabIndex = 2;
+            // 
             // splitContainer19
             // 
             this.splitContainer19.Dock = System.Windows.Forms.DockStyle.Fill;
             this.splitContainer19.FixedPanel = System.Windows.Forms.FixedPanel.Panel2;
             this.splitContainer19.IsSplitterFixed = true;
-            this.splitContainer19.Location = new System.Drawing.Point(3, 3);
+            this.splitContainer19.Location = new System.Drawing.Point(0, 0);
             this.splitContainer19.Name = "splitContainer19";
             // 
             // splitContainer19.Panel1
@@ -465,43 +523,79 @@
             // splitContainer19.Panel2
             // 
             this.splitContainer19.Panel2.BackColor = System.Drawing.SystemColors.ButtonFace;
-            this.splitContainer19.Panel2.Controls.Add(this.lblRec);
+            this.splitContainer19.Panel2.Controls.Add(this.chkRefreshTmdb);
+            this.splitContainer19.Panel2.Controls.Add(this.btnTitleEdit);
+            this.splitContainer19.Panel2.Controls.Add(this.chkNeedRemove);
+            this.splitContainer19.Panel2.Controls.Add(this.btnReprocessData);
+            this.splitContainer19.Panel2.Controls.Add(this.chkOnlyWTmdb);
             this.splitContainer19.Panel2.Controls.Add(this.chkTmdbDo);
-            this.splitContainer19.Panel2.Controls.Add(this.button3);
-            this.splitContainer19.Panel2.Controls.Add(this.button1);
-            this.splitContainer19.Size = new System.Drawing.Size(936, 294);
-            this.splitContainer19.SplitterDistance = 822;
+            this.splitContainer19.Panel2.Controls.Add(this.btnReprocess);
+            this.splitContainer19.Panel2.Controls.Add(this.btnLoadCatalogs);
+            this.splitContainer19.Size = new System.Drawing.Size(936, 264);
+            this.splitContainer19.SplitterDistance = 797;
             this.splitContainer19.TabIndex = 1;
             // 
             // splitContainer15
             // 
             this.splitContainer15.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer15.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.splitContainer15.Location = new System.Drawing.Point(0, 0);
             this.splitContainer15.Name = "splitContainer15";
             // 
             // splitContainer15.Panel1
             // 
-            this.splitContainer15.Panel1.Controls.Add(this.tvCatalogs);
+            this.splitContainer15.Panel1.Controls.Add(this.splitContainer21);
             // 
             // splitContainer15.Panel2
             // 
             this.splitContainer15.Panel2.Controls.Add(this.splitContainer16);
-            this.splitContainer15.Size = new System.Drawing.Size(822, 294);
-            this.splitContainer15.SplitterDistance = 274;
+            this.splitContainer15.Size = new System.Drawing.Size(797, 264);
+            this.splitContainer15.SplitterDistance = 265;
             this.splitContainer15.TabIndex = 0;
+            // 
+            // splitContainer21
+            // 
+            this.splitContainer21.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer21.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer21.Name = "splitContainer21";
+            this.splitContainer21.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer21.Panel1
+            // 
+            this.splitContainer21.Panel1.Controls.Add(this.tvCatalogs);
+            // 
+            // splitContainer21.Panel2
+            // 
+            this.splitContainer21.Panel2.Controls.Add(this.MediaPlayerCatalog);
+            this.splitContainer21.Size = new System.Drawing.Size(265, 264);
+            this.splitContainer21.SplitterDistance = 132;
+            this.splitContainer21.TabIndex = 1;
             // 
             // tvCatalogs
             // 
             this.tvCatalogs.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tvCatalogs.ImageIndex = 0;
             this.tvCatalogs.ImageList = this.imageListIcon;
+            this.tvCatalogs.ItemHeight = 18;
             this.tvCatalogs.Location = new System.Drawing.Point(0, 0);
             this.tvCatalogs.Name = "tvCatalogs";
             this.tvCatalogs.SelectedImageIndex = 0;
-            this.tvCatalogs.Size = new System.Drawing.Size(274, 294);
+            this.tvCatalogs.Size = new System.Drawing.Size(265, 132);
             this.tvCatalogs.TabIndex = 0;
             this.tvCatalogs.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tvCatalogs_AfterSelect);
             this.tvCatalogs.NodeMouseClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvCatalogs_NodeMouseClick);
+            this.tvCatalogs.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvCatalogs_NodeMouseDoubleClick);
+            // 
+            // MediaPlayerCatalog
+            // 
+            this.MediaPlayerCatalog.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MediaPlayerCatalog.Enabled = true;
+            this.MediaPlayerCatalog.Location = new System.Drawing.Point(0, 0);
+            this.MediaPlayerCatalog.Name = "MediaPlayerCatalog";
+            this.MediaPlayerCatalog.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("MediaPlayerCatalog.OcxState")));
+            this.MediaPlayerCatalog.Size = new System.Drawing.Size(265, 128);
+            this.MediaPlayerCatalog.TabIndex = 0;
+            this.MediaPlayerCatalog.DoubleClickEvent += new AxWMPLib._WMPOCXEvents_DoubleClickEventHandler(this.MediaPlayerCatalog_DoubleClickEvent);
             // 
             // splitContainer16
             // 
@@ -517,8 +611,8 @@
             // splitContainer16.Panel2
             // 
             this.splitContainer16.Panel2.Controls.Add(this.splitContainer17);
-            this.splitContainer16.Size = new System.Drawing.Size(544, 294);
-            this.splitContainer16.SplitterDistance = 144;
+            this.splitContainer16.Size = new System.Drawing.Size(528, 264);
+            this.splitContainer16.SplitterDistance = 128;
             this.splitContainer16.TabIndex = 3;
             // 
             // pptGridCatalogs
@@ -531,7 +625,7 @@
             this.pptGridCatalogs.DocCommentDescription.Cursor = System.Windows.Forms.Cursors.Default;
             this.pptGridCatalogs.DocCommentDescription.Location = new System.Drawing.Point(3, 18);
             this.pptGridCatalogs.DocCommentDescription.Name = "";
-            this.pptGridCatalogs.DocCommentDescription.Size = new System.Drawing.Size(0, 52);
+            this.pptGridCatalogs.DocCommentDescription.Size = new System.Drawing.Size(0, 37);
             this.pptGridCatalogs.DocCommentDescription.TabIndex = 1;
             this.pptGridCatalogs.DocCommentImage = null;
             // 
@@ -541,7 +635,7 @@
             this.pptGridCatalogs.DocCommentTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
             this.pptGridCatalogs.DocCommentTitle.Location = new System.Drawing.Point(3, 3);
             this.pptGridCatalogs.DocCommentTitle.Name = "";
-            this.pptGridCatalogs.DocCommentTitle.Size = new System.Drawing.Size(0, 0);
+            this.pptGridCatalogs.DocCommentTitle.Size = new System.Drawing.Size(0, 15);
             this.pptGridCatalogs.DocCommentTitle.TabIndex = 0;
             this.pptGridCatalogs.DocCommentTitle.UseMnemonic = false;
             this.pptGridCatalogs.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -550,9 +644,10 @@
             this.pptGridCatalogs.Location = new System.Drawing.Point(0, 0);
             this.pptGridCatalogs.Name = "pptGridCatalogs";
             this.pptGridCatalogs.PropertySort = System.Windows.Forms.PropertySort.NoSort;
-            this.pptGridCatalogs.ShowCustomPropertiesSet = true;
-            this.pptGridCatalogs.Size = new System.Drawing.Size(544, 144);
+            this.pptGridCatalogs.SelectedObject = ((object)(resources.GetObject("pptGridCatalogs.SelectedObject")));
+            this.pptGridCatalogs.Size = new System.Drawing.Size(528, 128);
             this.pptGridCatalogs.TabIndex = 1;
+            this.pptGridCatalogs.ToolbarVisible = false;
             // 
             // 
             // 
@@ -566,10 +661,11 @@
             this.pptGridCatalogs.ToolStrip.Location = new System.Drawing.Point(0, 1);
             this.pptGridCatalogs.ToolStrip.Name = "";
             this.pptGridCatalogs.ToolStrip.Padding = new System.Windows.Forms.Padding(2, 0, 1, 0);
-            this.pptGridCatalogs.ToolStrip.Size = new System.Drawing.Size(544, 25);
+            this.pptGridCatalogs.ToolStrip.Size = new System.Drawing.Size(528, 25);
             this.pptGridCatalogs.ToolStrip.TabIndex = 1;
             this.pptGridCatalogs.ToolStrip.TabStop = true;
             this.pptGridCatalogs.ToolStrip.Text = "PropertyGridToolBar";
+            this.pptGridCatalogs.ToolStrip.Visible = false;
             // 
             // splitContainer17
             // 
@@ -586,7 +682,7 @@
             // splitContainer17.Panel2
             // 
             this.splitContainer17.Panel2.Controls.Add(this.splitContainer18);
-            this.splitContainer17.Size = new System.Drawing.Size(544, 146);
+            this.splitContainer17.Size = new System.Drawing.Size(528, 132);
             this.splitContainer17.SplitterDistance = 110;
             this.splitContainer17.TabIndex = 3;
             // 
@@ -612,8 +708,9 @@
             this.dtGridCatalogs.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dtGridCatalogs.ShowEditingIcon = false;
             this.dtGridCatalogs.ShowRowErrors = false;
-            this.dtGridCatalogs.Size = new System.Drawing.Size(110, 146);
+            this.dtGridCatalogs.Size = new System.Drawing.Size(110, 132);
             this.dtGridCatalogs.TabIndex = 0;
+            this.dtGridCatalogs.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dtGridCatalogs_CellContentClick);
             this.dtGridCatalogs.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dtGridCatalogs_CellContentClick);
             this.dtGridCatalogs.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dtGridCatalogs_CellDoubleClick);
             this.dtGridCatalogs.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dtGridCatalogs_CellEnter);
@@ -630,6 +727,7 @@
             // splitContainer18
             // 
             this.splitContainer18.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer18.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.splitContainer18.Location = new System.Drawing.Point(0, 0);
             this.splitContainer18.Name = "splitContainer18";
             // 
@@ -640,8 +738,8 @@
             // splitContainer18.Panel2
             // 
             this.splitContainer18.Panel2.Controls.Add(this.pictBackdropCatalogs);
-            this.splitContainer18.Size = new System.Drawing.Size(430, 146);
-            this.splitContainer18.SplitterDistance = 202;
+            this.splitContainer18.Size = new System.Drawing.Size(414, 132);
+            this.splitContainer18.SplitterDistance = 194;
             this.splitContainer18.TabIndex = 1;
             // 
             // pictPosterCatalogs
@@ -651,7 +749,7 @@
             this.pictPosterCatalogs.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictPosterCatalogs.Location = new System.Drawing.Point(0, 0);
             this.pictPosterCatalogs.Name = "pictPosterCatalogs";
-            this.pictPosterCatalogs.Size = new System.Drawing.Size(202, 146);
+            this.pictPosterCatalogs.Size = new System.Drawing.Size(194, 132);
             this.pictPosterCatalogs.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictPosterCatalogs.TabIndex = 0;
             this.pictPosterCatalogs.TabStop = false;
@@ -663,48 +761,106 @@
             this.pictBackdropCatalogs.Dock = System.Windows.Forms.DockStyle.Fill;
             this.pictBackdropCatalogs.Location = new System.Drawing.Point(0, 0);
             this.pictBackdropCatalogs.Name = "pictBackdropCatalogs";
-            this.pictBackdropCatalogs.Size = new System.Drawing.Size(224, 146);
+            this.pictBackdropCatalogs.Size = new System.Drawing.Size(216, 132);
             this.pictBackdropCatalogs.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictBackdropCatalogs.TabIndex = 1;
             this.pictBackdropCatalogs.TabStop = false;
             // 
-            // lblRec
+            // chkRefreshTmdb
             // 
-            this.lblRec.AutoSize = true;
-            this.lblRec.Location = new System.Drawing.Point(12, 95);
-            this.lblRec.Name = "lblRec";
-            this.lblRec.Size = new System.Drawing.Size(0, 13);
-            this.lblRec.TabIndex = 8;
+            this.chkRefreshTmdb.AutoSize = true;
+            this.chkRefreshTmdb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkRefreshTmdb.Location = new System.Drawing.Point(13, 100);
+            this.chkRefreshTmdb.Name = "chkRefreshTmdb";
+            this.chkRefreshTmdb.Size = new System.Drawing.Size(94, 17);
+            this.chkRefreshTmdb.TabIndex = 12;
+            this.chkRefreshTmdb.Text = "Refresh TMDB";
+            this.chkRefreshTmdb.UseVisualStyleBackColor = true;
+            // 
+            // btnTitleEdit
+            // 
+            this.btnTitleEdit.Location = new System.Drawing.Point(10, 196);
+            this.btnTitleEdit.Name = "btnTitleEdit";
+            this.btnTitleEdit.Size = new System.Drawing.Size(120, 23);
+            this.btnTitleEdit.TabIndex = 11;
+            this.btnTitleEdit.Text = "Edit Title";
+            this.btnTitleEdit.UseVisualStyleBackColor = true;
+            this.btnTitleEdit.Visible = false;
+            this.btnTitleEdit.Click += new System.EventHandler(this.btnTitleEdit_Click);
+            // 
+            // chkNeedRemove
+            // 
+            this.chkNeedRemove.AutoSize = true;
+            this.chkNeedRemove.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkNeedRemove.Location = new System.Drawing.Point(13, 60);
+            this.chkNeedRemove.Name = "chkNeedRemove";
+            this.chkNeedRemove.Size = new System.Drawing.Size(93, 17);
+            this.chkNeedRemove.TabIndex = 10;
+            this.chkNeedRemove.Text = "Need Remove";
+            this.chkNeedRemove.UseVisualStyleBackColor = true;
+            this.chkNeedRemove.CheckedChanged += new System.EventHandler(this.chkNeedRemove_CheckedChanged);
+            // 
+            // btnReprocessData
+            // 
+            this.btnReprocessData.Location = new System.Drawing.Point(10, 121);
+            this.btnReprocessData.Name = "btnReprocessData";
+            this.btnReprocessData.Size = new System.Drawing.Size(120, 23);
+            this.btnReprocessData.TabIndex = 9;
+            this.btnReprocessData.Text = "RE-PROCESS DATA";
+            this.btnReprocessData.UseVisualStyleBackColor = true;
+            this.btnReprocessData.Click += new System.EventHandler(this.btnReprocessData_Click);
+            // 
+            // chkOnlyWTmdb
+            // 
+            this.chkOnlyWTmdb.AutoSize = true;
+            this.chkOnlyWTmdb.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkOnlyWTmdb.Location = new System.Drawing.Point(13, 42);
+            this.chkOnlyWTmdb.Name = "chkOnlyWTmdb";
+            this.chkOnlyWTmdb.Size = new System.Drawing.Size(95, 17);
+            this.chkOnlyWTmdb.TabIndex = 8;
+            this.chkOnlyWTmdb.Text = "Only No TMDB";
+            this.chkOnlyWTmdb.UseVisualStyleBackColor = true;
+            this.chkOnlyWTmdb.CheckedChanged += new System.EventHandler(this.chkOnlyWTmdb_CheckedChanged);
             // 
             // chkTmdbDo
             // 
             this.chkTmdbDo.AutoSize = true;
-            this.chkTmdbDo.Location = new System.Drawing.Point(13, 71);
+            this.chkTmdbDo.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkTmdbDo.Location = new System.Drawing.Point(13, 80);
             this.chkTmdbDo.Name = "chkTmdbDo";
-            this.chkTmdbDo.Size = new System.Drawing.Size(57, 17);
+            this.chkTmdbDo.Size = new System.Drawing.Size(75, 17);
             this.chkTmdbDo.TabIndex = 7;
-            this.chkTmdbDo.Text = "TMDB";
+            this.chkTmdbDo.Text = "Get TMDB";
             this.chkTmdbDo.UseVisualStyleBackColor = true;
             // 
-            // button3
+            // btnReprocess
             // 
-            this.button3.Location = new System.Drawing.Point(10, 42);
-            this.button3.Name = "button3";
-            this.button3.Size = new System.Drawing.Size(91, 23);
-            this.button3.TabIndex = 6;
-            this.button3.Text = "RE-PROCESS";
-            this.button3.UseVisualStyleBackColor = true;
-            this.button3.Click += new System.EventHandler(this.button3_Click);
+            this.btnReprocess.Location = new System.Drawing.Point(10, 225);
+            this.btnReprocess.Name = "btnReprocess";
+            this.btnReprocess.Size = new System.Drawing.Size(120, 23);
+            this.btnReprocess.TabIndex = 6;
+            this.btnReprocess.Text = "RE-PROCESS";
+            this.btnReprocess.UseVisualStyleBackColor = true;
+            this.btnReprocess.Visible = false;
+            this.btnReprocess.Click += new System.EventHandler(this.btnReprocess_Click);
             // 
-            // button1
+            // btnLoadCatalogs
             // 
-            this.button1.Location = new System.Drawing.Point(10, 13);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(91, 23);
-            this.button1.TabIndex = 0;
-            this.button1.Text = "OPEN";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.btnLoadCatalogs_Click);
+            this.btnLoadCatalogs.Location = new System.Drawing.Point(10, 13);
+            this.btnLoadCatalogs.Name = "btnLoadCatalogs";
+            this.btnLoadCatalogs.Size = new System.Drawing.Size(120, 23);
+            this.btnLoadCatalogs.TabIndex = 0;
+            this.btnLoadCatalogs.Text = "OPEN";
+            this.btnLoadCatalogs.UseVisualStyleBackColor = true;
+            this.btnLoadCatalogs.Click += new System.EventHandler(this.btnLoadCatalogs_Click);
+            // 
+            // lblRec
+            // 
+            this.lblRec.AutoSize = true;
+            this.lblRec.Location = new System.Drawing.Point(5, 6);
+            this.lblRec.Name = "lblRec";
+            this.lblRec.Size = new System.Drawing.Size(0, 13);
+            this.lblRec.TabIndex = 8;
             // 
             // tabCatlog
             // 
@@ -742,12 +898,13 @@
             // splitContainer7
             // 
             this.splitContainer7.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer7.FixedPanel = System.Windows.Forms.FixedPanel.Panel1;
             this.splitContainer7.Location = new System.Drawing.Point(0, 0);
             this.splitContainer7.Name = "splitContainer7";
             // 
             // splitContainer7.Panel1
             // 
-            this.splitContainer7.Panel1.Controls.Add(this.tvFoldersCat);
+            this.splitContainer7.Panel1.Controls.Add(this.splitContainer22);
             // 
             // splitContainer7.Panel2
             // 
@@ -755,6 +912,24 @@
             this.splitContainer7.Size = new System.Drawing.Size(936, 265);
             this.splitContainer7.SplitterDistance = 311;
             this.splitContainer7.TabIndex = 8;
+            // 
+            // splitContainer22
+            // 
+            this.splitContainer22.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.splitContainer22.Location = new System.Drawing.Point(0, 0);
+            this.splitContainer22.Name = "splitContainer22";
+            this.splitContainer22.Orientation = System.Windows.Forms.Orientation.Horizontal;
+            // 
+            // splitContainer22.Panel1
+            // 
+            this.splitContainer22.Panel1.Controls.Add(this.tvFoldersCat);
+            // 
+            // splitContainer22.Panel2
+            // 
+            this.splitContainer22.Panel2.Controls.Add(this.MediaPlayerCataloging);
+            this.splitContainer22.Size = new System.Drawing.Size(311, 265);
+            this.splitContainer22.SplitterDistance = 132;
+            this.splitContainer22.TabIndex = 8;
             // 
             // tvFoldersCat
             // 
@@ -765,9 +940,21 @@
             this.tvFoldersCat.Location = new System.Drawing.Point(0, 0);
             this.tvFoldersCat.Name = "tvFoldersCat";
             this.tvFoldersCat.SelectedImageIndex = 0;
-            this.tvFoldersCat.Size = new System.Drawing.Size(311, 265);
+            this.tvFoldersCat.Size = new System.Drawing.Size(311, 132);
             this.tvFoldersCat.TabIndex = 7;
             this.tvFoldersCat.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.tvFoldersCat_AfterSelect);
+            this.tvFoldersCat.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.tvFoldersCat_NodeMouseDoubleClick);
+            // 
+            // MediaPlayerCataloging
+            // 
+            this.MediaPlayerCataloging.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.MediaPlayerCataloging.Enabled = true;
+            this.MediaPlayerCataloging.Location = new System.Drawing.Point(0, 0);
+            this.MediaPlayerCataloging.Name = "MediaPlayerCataloging";
+            this.MediaPlayerCataloging.OcxState = ((System.Windows.Forms.AxHost.State)(resources.GetObject("MediaPlayerCataloging.OcxState")));
+            this.MediaPlayerCataloging.Size = new System.Drawing.Size(311, 129);
+            this.MediaPlayerCataloging.TabIndex = 0;
+            this.MediaPlayerCataloging.DoubleClickEvent += new AxWMPLib._WMPOCXEvents_DoubleClickEventHandler(this.MediaPlayerCataloging_DoubleClickEvent);
             // 
             // splitContainer8
             // 
@@ -784,6 +971,7 @@
             // splitContainer8.Panel2
             // 
             this.splitContainer8.Panel2.BackColor = System.Drawing.SystemColors.ButtonFace;
+            this.splitContainer8.Panel2.Controls.Add(this.btnTitleEditCatloging);
             this.splitContainer8.Panel2.Controls.Add(this.btnSaveCatalog);
             this.splitContainer8.Panel2.Controls.Add(this.chkTmdb);
             this.splitContainer8.Panel2.Controls.Add(this.chkCRC);
@@ -820,7 +1008,7 @@
             this.pptGrdDetailData.DocCommentDescription.Cursor = System.Windows.Forms.Cursors.Default;
             this.pptGrdDetailData.DocCommentDescription.Location = new System.Drawing.Point(3, 18);
             this.pptGrdDetailData.DocCommentDescription.Name = "";
-            this.pptGrdDetailData.DocCommentDescription.Size = new System.Drawing.Size(0, 52);
+            this.pptGrdDetailData.DocCommentDescription.Size = new System.Drawing.Size(0, 37);
             this.pptGrdDetailData.DocCommentDescription.TabIndex = 1;
             this.pptGrdDetailData.DocCommentImage = null;
             // 
@@ -830,7 +1018,7 @@
             this.pptGrdDetailData.DocCommentTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold);
             this.pptGrdDetailData.DocCommentTitle.Location = new System.Drawing.Point(3, 3);
             this.pptGrdDetailData.DocCommentTitle.Name = "";
-            this.pptGrdDetailData.DocCommentTitle.Size = new System.Drawing.Size(0, 0);
+            this.pptGrdDetailData.DocCommentTitle.Size = new System.Drawing.Size(0, 15);
             this.pptGrdDetailData.DocCommentTitle.TabIndex = 0;
             this.pptGrdDetailData.DocCommentTitle.UseMnemonic = false;
             this.pptGrdDetailData.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -842,6 +1030,7 @@
             this.pptGrdDetailData.ShowCustomPropertiesSet = true;
             this.pptGrdDetailData.Size = new System.Drawing.Size(507, 130);
             this.pptGrdDetailData.TabIndex = 1;
+            this.pptGrdDetailData.ToolbarVisible = false;
             // 
             // 
             // 
@@ -859,6 +1048,7 @@
             this.pptGrdDetailData.ToolStrip.TabIndex = 1;
             this.pptGrdDetailData.ToolStrip.TabStop = true;
             this.pptGrdDetailData.ToolStrip.Text = "PropertyGridToolBar";
+            this.pptGrdDetailData.ToolStrip.Visible = false;
             this.pptGrdDetailData.SelectedGridItemChanged += new System.Windows.Forms.SelectedGridItemChangedEventHandler(this.pptGrdDetailData_SelectedGridItemChanged);
             // 
             // tabDetail
@@ -945,8 +1135,9 @@
             this.dataGridViewImage.ShowRowErrors = false;
             this.dataGridViewImage.Size = new System.Drawing.Size(110, 99);
             this.dataGridViewImage.TabIndex = 0;
+            this.dataGridViewImage.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewImage_CellClick);
             this.dataGridViewImage.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewImage_CellContentClick_1);
-            this.dataGridViewImage.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewImage_CellClick);
+            this.dataGridViewImage.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewImage_CellDoubleClick);
             this.dataGridViewImage.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dataGridViewImage_CellEnter);
             // 
             // Image
@@ -999,11 +1190,22 @@
             this.pictBackdrop.TabIndex = 1;
             this.pictBackdrop.TabStop = false;
             // 
+            // btnTitleEditCatloging
+            // 
+            this.btnTitleEditCatloging.Location = new System.Drawing.Point(11, 206);
+            this.btnTitleEditCatloging.Name = "btnTitleEditCatloging";
+            this.btnTitleEditCatloging.Size = new System.Drawing.Size(91, 23);
+            this.btnTitleEditCatloging.TabIndex = 12;
+            this.btnTitleEditCatloging.Text = "Edit Title";
+            this.btnTitleEditCatloging.UseVisualStyleBackColor = true;
+            this.btnTitleEditCatloging.Visible = false;
+            this.btnTitleEditCatloging.Click += new System.EventHandler(this.btnTitleEditCatalog_Click);
+            // 
             // btnSaveCatalog
             // 
-            this.btnSaveCatalog.Location = new System.Drawing.Point(14, 89);
+            this.btnSaveCatalog.Location = new System.Drawing.Point(11, 84);
             this.btnSaveCatalog.Name = "btnSaveCatalog";
-            this.btnSaveCatalog.Size = new System.Drawing.Size(75, 23);
+            this.btnSaveCatalog.Size = new System.Drawing.Size(91, 23);
             this.btnSaveCatalog.TabIndex = 4;
             this.btnSaveCatalog.Text = "Save";
             this.btnSaveCatalog.UseVisualStyleBackColor = true;
@@ -1012,7 +1214,7 @@
             // chkTmdb
             // 
             this.chkTmdb.AutoSize = true;
-            this.chkTmdb.Location = new System.Drawing.Point(14, 66);
+            this.chkTmdb.Location = new System.Drawing.Point(14, 61);
             this.chkTmdb.Name = "chkTmdb";
             this.chkTmdb.Size = new System.Drawing.Size(57, 17);
             this.chkTmdb.TabIndex = 3;
@@ -1031,9 +1233,9 @@
             // 
             // btnCatlog
             // 
-            this.btnCatlog.Location = new System.Drawing.Point(14, 14);
+            this.btnCatlog.Location = new System.Drawing.Point(11, 14);
             this.btnCatlog.Name = "btnCatlog";
-            this.btnCatlog.Size = new System.Drawing.Size(75, 23);
+            this.btnCatlog.Size = new System.Drawing.Size(91, 23);
             this.btnCatlog.TabIndex = 0;
             this.btnCatlog.Text = "Catlog";
             this.btnCatlog.UseVisualStyleBackColor = true;
@@ -1501,7 +1703,7 @@
             this.aboutToolStripMenuItem1});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(950, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(994, 24);
             this.menuStrip1.TabIndex = 14;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -1518,7 +1720,7 @@
             this.panelBase.Dock = System.Windows.Forms.DockStyle.Fill;
             this.panelBase.Location = new System.Drawing.Point(0, 0);
             this.panelBase.Name = "panelBase";
-            this.panelBase.Size = new System.Drawing.Size(950, 326);
+            this.panelBase.Size = new System.Drawing.Size(994, 503);
             this.panelBase.TabIndex = 15;
             // 
             // splitContainer11
@@ -1542,7 +1744,7 @@
             // splitContainer11.Panel2
             // 
             this.splitContainer11.Panel2.Controls.Add(this.panelBase);
-            this.splitContainer11.Size = new System.Drawing.Size(950, 437);
+            this.splitContainer11.Size = new System.Drawing.Size(994, 614);
             this.splitContainer11.SplitterDistance = 107;
             this.splitContainer11.TabIndex = 16;
             // 
@@ -1550,7 +1752,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(950, 461);
+            this.ClientSize = new System.Drawing.Size(994, 638);
             this.Controls.Add(this.splitContainer11);
             this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
@@ -1571,6 +1773,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer13)).EndInit();
             this.splitContainer13.ResumeLayout(false);
             this.tbCatalogs.ResumeLayout(false);
+            this.splitContainer20.Panel1.ResumeLayout(false);
+            this.splitContainer20.Panel2.ResumeLayout(false);
+            this.splitContainer20.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer20)).EndInit();
+            this.splitContainer20.ResumeLayout(false);
             this.splitContainer19.Panel1.ResumeLayout(false);
             this.splitContainer19.Panel2.ResumeLayout(false);
             this.splitContainer19.Panel2.PerformLayout();
@@ -1580,6 +1787,11 @@
             this.splitContainer15.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer15)).EndInit();
             this.splitContainer15.ResumeLayout(false);
+            this.splitContainer21.Panel1.ResumeLayout(false);
+            this.splitContainer21.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer21)).EndInit();
+            this.splitContainer21.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.MediaPlayerCatalog)).EndInit();
             this.splitContainer16.Panel1.ResumeLayout(false);
             this.splitContainer16.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer16)).EndInit();
@@ -1605,6 +1817,11 @@
             this.splitContainer7.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer7)).EndInit();
             this.splitContainer7.ResumeLayout(false);
+            this.splitContainer22.Panel1.ResumeLayout(false);
+            this.splitContainer22.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.splitContainer22)).EndInit();
+            this.splitContainer22.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.MediaPlayerCataloging)).EndInit();
             this.splitContainer8.Panel1.ResumeLayout(false);
             this.splitContainer8.Panel2.ResumeLayout(false);
             this.splitContainer8.Panel2.PerformLayout();
@@ -1770,10 +1987,22 @@
         private System.Windows.Forms.PictureBox pictPosterCatalogs;
         private System.Windows.Forms.PictureBox pictBackdropCatalogs;
         private System.Windows.Forms.SplitContainer splitContainer19;
-        private System.Windows.Forms.Button button1;
-        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button btnLoadCatalogs;
+        private System.Windows.Forms.Button btnReprocess;
         private System.Windows.Forms.CheckBox chkTmdbDo;
         private System.Windows.Forms.Label lblRec;
+        private System.Windows.Forms.SplitContainer splitContainer20;
+        private System.Windows.Forms.CheckBox chkOnlyWTmdb;
+        private System.Windows.Forms.Button btnReprocessData;
+        private System.Windows.Forms.CheckBox chkNeedRemove;
+        private System.Windows.Forms.Button btnTitleEdit;
+        private System.Windows.Forms.Button btnTitleEditCatloging;
+        private System.Windows.Forms.CheckBox chkRefreshTmdb;
+        private System.Windows.Forms.SplitContainer splitContainer21;
+        private AxWMPLib.AxWindowsMediaPlayer MediaPlayerCatalog;
+        private System.Windows.Forms.SplitContainer splitContainer22;
+        private AxWMPLib.AxWindowsMediaPlayer MediaPlayerCataloging;
+        private System.Windows.Forms.CheckBox chkVideoRes;
     }
 }
 

@@ -53,7 +53,6 @@ namespace FolderRenamer
         public searchItemCategory Type { get; set; }
     }
 
-
     [TypeConverter(typeof(ExpandableObjectConverter))]
     public class CatalogItem
     {
@@ -92,11 +91,15 @@ namespace FolderRenamer
         public int? Resolution { get; set; }
 
         // control flags
-        public int ToRemoveFromCatalog { get; set; } = 0;
+        public int ToRemoveFromCatalog { get; set; } = 0; // Needs to remove folders from catalogs folder
+                                                          // this flag indicates that has many unnecessary
+                                                          // folders at tmdb catalog folders
+        public int TmdbPosterFoldersQtde { get; set; }
         public int ToDelete { get; set; } = 0;
         public int ConfirmDelete { get; set; } = 0;
         public int Deleted { get; set; } = 0;
         public int Inserted { get; set; } = 1;
+        public int NeedTmdb { get; set; } = 1;
         public int ManualIntervention { get; set; } = 0;
 
         // Fille Attribs
@@ -143,6 +146,32 @@ namespace FolderRenamer
         public String Key { get; set; }
         public String Filename { get; set; }
         public Bitmap Image { get; set; }
+    }
+
+    public enum ManualFieldsIntervention
+    {
+        Title,
+        Year,
+        Serie,
+        Season,
+        Episode
+    }
+
+    // this class is used to retrieve updated data
+    // when in automatic processess
+    public class ManualIntervention
+    {
+        [PrimaryKey, AutoIncrement]
+        public int Id { get; set; }
+
+        [Indexed]
+        public ManualFieldsIntervention Field { get; set; }
+
+        [Indexed, SQLite.MaxLength(2000)]
+        public string OriginalValue { get; set; }
+
+        [Indexed, SQLite.MaxLength(2000)]
+        public string Value { get; set; }
     }
 
 }
